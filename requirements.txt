@@ -1,0 +1,12 @@
+dash-design-kit==1.6.7
+gunicorn==20.0.4
+numpy>=1.19.5
+pandas==1.1.4
+pyarrow==7.0.0
+vaex-core==4.8.0
+xarray==0.15.1
+dash-bootstrap-components
+redis==3.5.*
+SQLAlchemy==1.3.20
+pg8000==1.16.5
+celery==4.4.7
