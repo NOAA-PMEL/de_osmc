@@ -153,7 +153,7 @@ app.layout = ddk.App([
     html.Div(id='window-info', style={'display': 'none'}),
     dcc.Store(id='map-info'),
     ddk.Header([
-        ddk.Logo(src=app.get_asset_url('pmel-emblem-rgb-2022.png'), style={'height':'90px'}),
+        ddk.Logo(src=app.get_asset_url('noaa-logo-rgb-2022.png'), style={'height':'90px'}),
         ddk.Title('Observing System Monitoring Center'),
         dcc.Loading(html.Div(id='map-loader', style={'float': 'right', 'display': 'none'}))
     ]),
@@ -448,11 +448,11 @@ def show_platforms(map_in_variable, map_in_platform_type, map_in_country, map_in
             if len(map_in_variable) > 0:
                 for qidx, qvar in enumerate(map_in_variable):
                     if qidx == 0:
-                        query = query + qvar + '> 0'
+                        query = query + qvar + ' > 0'
                     else:
-                        query = query + ' or ' + qvar + '> 0'
+                        query = query + ' or ' + qvar + ' > 0'
         elif isinstance(map_in_variable, str):
-            query = query + map_in_variable + '> 0'
+            query = query + map_in_variable + ' > 0'
         if len(query) > 1:
             has_data = counts_df.query(query)
             map_df = map_df[map_df['platform_code'].isin(has_data['platform_code'])]
