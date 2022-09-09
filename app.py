@@ -9,6 +9,7 @@ import numpy as np
 import zc
 import constants
 import db
+import colorcet as cc
 
 import json
 # import ssl
@@ -16,7 +17,7 @@ import json
 
 app = Dash(
     __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP]
+    external_stylesheets=[dbc.themes.BOOTSTRAP, 'legend_toggle.css']
 )
 server = app.server  # expose server variable for Procfile
 
@@ -29,68 +30,95 @@ zoom = 1.4
 height_of_row=345
 header_footer_fudge = 150
 
+def cc_color_set(index):
+    rgb = px.colors.convert_to_RGB_255(cc.glasbey_bw_minc_20[index])
+    hexi = '#%02x%02x%02x' % rgb
+    return hexi
+    
+
 platform_color = {
-    'ARGO' : '#0040FF',
-    'AUTONOMOUS PINNIPEDS': '#FF0000',
-    'C-MAN WEATHER STATIONS': '#FF7F00', 
-    'CLIMATE REFERENCE MOORED BUOYS': '#FFD400', 
-    'DRIFTING BUOYS': '#FFFF00', 
-    'GLIDERS': '#BFFF00',
-    'ICE BUOYS': '#6AFF00',
-    'MOORED BUOYS': '#00EAFF',
-    'RESEARCH': '#AA00FF',
-    'SHIPS': '#FF00AA',
-    'SHORE AND BOTTOM STATIONS': '#EDB9B9',
-    'TIDE GAUGE STATIONS': '#E7E9B9',
-    'TROPICAL MOORED BUOYS': '#B9EDE0',
-    'TSUNAMI WARNING STATIONS': '#B9D7ED',
-    'UNKNOWN': '#DCB9ED',
-    'UNMANNED SURFACE VEHICLE': '#8F2323',
-    'VOLUNTEER OBSERVING SHIPS': '#8F6A23',
-    'VOSCLIM': '#23628F',
-    'WEATHER AND OCEAN OBS': '#6B238F',
-    'WEATHER BUOYS': '#000000',
-    'WEATHER OBS': '#737373',
+    'ARGO' : cc_color_set(0),
+    'AUTONOMOUS PINNIPEDS': cc_color_set(1),
+    'C-MAN WEATHER STATIONS': cc_color_set(2), 
+    'CLIMATE REFERENCE MOORED BUOYS': cc_color_set(3), 
+    'DRIFTING BUOYS': cc_color_set(4), 
+    'GLIDERS': cc_color_set(5),
+    'ICE BUOYS': cc_color_set(6),
+    'MOORED BUOYS': cc_color_set(7),
+    'RESEARCH': cc_color_set(8),
+    'SHIPS': cc_color_set(9),
+    'SHORE AND BOTTOM STATIONS': cc_color_set(10),
+    'TIDE GAUGE STATIONS': cc_color_set(11),
+    'TROPICAL MOORED BUOYS': cc_color_set(12),
+    'TSUNAMI WARNING STATIONS': cc_color_set(13),
+    'UNKNOWN': cc_color_set(14),
+    'UNMANNED SURFACE VEHICLE': cc_color_set(15),
+    'VOLUNTEER OBSERVING SHIPS': cc_color_set(16),
+    'VOSCLIM': cc_color_set(17),
+    'WEATHER AND OCEAN OBS': cc_color_set(18),
+    'WEATHER BUOYS': cc_color_set(19),
+    'WEATHER OBS': cc_color_set(20),
 }
 
+# platform_color = {
+#     'ARGO' : '#0040FF',
+#     'AUTONOMOUS PINNIPEDS': '#FF0000',
+#     'C-MAN WEATHER STATIONS': '#FF7F00', 
+#     'CLIMATE REFERENCE MOORED BUOYS': '#FFD400', 
+#     'DRIFTING BUOYS': '#FFFF00', 
+#     'GLIDERS': '#BFFF00',
+#     'ICE BUOYS': '#6AFF00',
+#     'MOORED BUOYS': '#00EAFF',
+#     'RESEARCH': '#AA00FF',
+#     'SHIPS': '#FF00AA',
+#     'SHORE AND BOTTOM STATIONS': '#EDB9B9',
+#     'TIDE GAUGE STATIONS': '#E7E9B9',
+#     'TROPICAL MOORED BUOYS': '#B9EDE0',
+#     'TSUNAMI WARNING STATIONS': '#B9D7ED',
+#     'UNKNOWN': '#DCB9ED',
+#     'UNMANNED SURFACE VEHICLE': '#8F2323',
+#     'VOLUNTEER OBSERVING SHIPS': '#8F6A23',
+#     'VOSCLIM': '#23628F',
+#     'WEATHER AND OCEAN OBS': '#6B238F',
+#     'WEATHER BUOYS': '#000000',
+#     'WEATHER OBS': '#737373',
+# }
+
 country_color = {
-    'AUSTRALIA': px.colors.qualitative.Dark24[0],
-    'BAHAMAS': px.colors.qualitative.Dark24[1],
-    'BENIN': px.colors.qualitative.Dark24[2],
-    'BERMUDA': px.colors.qualitative.Dark24[3],
-    'BRAZIL': px.colors.qualitative.Dark24[4],
-    'BULGARIA': px.colors.qualitative.Dark24[5],
-    'CANADA': px.colors.qualitative.Dark24[6],
-    'CHINA': px.colors.qualitative.Dark24[7],
-    'CROATIA': px.colors.qualitative.Dark24[8],
-    'EL SALVADOR': px.colors.qualitative.Dark24[9],
-    'EUROPEAN UNION': px.colors.qualitative.Dark24[10],
-    'FRANCE': px.colors.qualitative.Dark24[11],
-    'GERMANY': px.colors.qualitative.Dark24[12],
-    'GREECE': px.colors.qualitative.Dark24[13],
-    'HONG KONG': px.colors.qualitative.Dark24[14],
-    'INDIA': px.colors.qualitative.Dark24[15],
-    'IRAN, ISLAMIC REPUBLIC OF': px.colors.qualitative.Dark24[16],
-    'IRELAND': px.colors.qualitative.Dark24[17],
-    'ISRAEL': px.colors.qualitative.Dark24[18],
-    'ITALY': px.colors.qualitative.Dark24[19],
-    'JAPAN': px.colors.qualitative.Dark24[20],
-    'KOREA, REPUBLIC OF': px.colors.qualitative.Dark24[21],
-    'MARSHALL ISLANDS': px.colors.qualitative.Dark24[22],
-    'NETHERLANDS': px.colors.qualitative.Dark24[23],
-    'NEW ZEALAND': px.colors.qualitative.Light24[0],
-    'NORWAY': px.colors.qualitative.Light24[1],
-    'PHILIPPINES': px.colors.qualitative.Light24[2],
-    'POLAND': px.colors.qualitative.Light24[3],
-    'PORTUGAL': px.colors.qualitative.Light24[4],
-    'ROMANIA': px.colors.qualitative.Light24[5],
-    'RUSSIAN FEDERATION': px.colors.qualitative.Light24[6],
-    'SOUTH AFRICA': px.colors.qualitative.Light24[7],
-    'SPAIN': px.colors.qualitative.Light24[8],
-    'SYRIAN ARAB REPUBLIC': px.colors.qualitative.Light24[9],
-    'UNITED KINGDOM': px.colors.qualitative.Light24[10],
-    'UNITED STATES': px.colors.qualitative.Light24[11],
-    'UNKNOWN': px.colors.qualitative.Light24[12],
+    'AUSTRALIA' : cc_color_set(21),
+    'BENIN' : cc_color_set(22),
+    'BRAZIL' : cc_color_set(23),
+    'BULGARIA' : cc_color_set(24),
+    'CANADA' : cc_color_set(25),
+    'CHINA' : cc_color_set(26),
+    'CROATIA' : cc_color_set(27),
+    'EL SALVADOR' : cc_color_set(28),
+    'EUROPEAN UNION' : cc_color_set(29),
+    'FRANCE' : cc_color_set(30),
+    'GERMANY' : cc_color_set(31),
+    'GREECE' : cc_color_set(32),
+    'HONG KONG' : cc_color_set(33),
+    'INDIA' : cc_color_set(34),
+    'IRAN, ISLAMIC REPUBLIC OF' : cc_color_set(35),
+    'IRELAND' : cc_color_set(36),
+    'ISRAEL' : cc_color_set(37),
+    'ITALY' : cc_color_set(38),
+    'JAPAN' : cc_color_set(39),
+    'KOREA, REPUBLIC OF' : cc_color_set(40),
+    'NETHERLANDS' : cc_color_set(41),
+    'NEW ZEALAND' : cc_color_set(42),
+    'NORWAY' : cc_color_set(43),
+    'PHILIPPINES' : cc_color_set(44),
+    'POLAND' : cc_color_set(45),
+    'PORTUGAL' : cc_color_set(46),
+    'ROMANIA' : cc_color_set(47),
+    'RUSSIAN FEDERATION' : cc_color_set(48),
+    'SOUTH AFRICA' : cc_color_set(49),
+    'SPAIN' : cc_color_set(50),
+    'SYRIAN ARAB REPUBLIC' : cc_color_set(51),
+    'UNITED KINGDOM' : cc_color_set(52),
+    'UNITED STATES' : cc_color_set(53),
+    'UNKNOWN' : cc_color_set(54),
 }
 
 test_file = 'data/nc_osmc_data_rt_test.csv'
@@ -168,24 +196,40 @@ app.layout = ddk.App([
                     style={'padding-left': '10px'},
                     options=[
                         {'value': "AUSTRALIA", 'label': 'Australia'},
+                        {'value': 'BENIN', 'label': 'Benin'},
                         {'value': "BRAZIL", 'label': 'Brazil'},
+                        {'value': 'BULGARIA', 'label': 'Bulgaria'},
                         {'value': "CANADA", 'label': 'Canada'},
                         {'value': "CHINA", 'label': 'China'},
+                        {'value': 'CROATIA', 'label': 'Croatia'},
+                        {'value': 'EL SALVADOR', 'label': 'El Salvador'},
                         {'value': "EUROPEAN UNION", 'label': 'European Union'},
                         {'value': "FRANCE", 'label': 'France'},
                         {'value': "GERMANY", 'label': 'Germany'},
+                        {'value': 'GREECE', 'label' : 'Greece'},
+                        {'value': 'HONG KONG', 'label': 'Hong Kong'},
                         {'value': "INDIA", 'label': 'India'},
+                        {'value': 'IRAN, ISLAMIC REPUBLIC OF', 'label' : 'Iran, Islamic Republic of'},
                         {'value': "IRELAND", 'label': 'Ireland'},
+                        {'value': 'ISRAEL', 'label': 'Israel'},
+                        {'value': 'ITALY', 'label': 'Italy'},
                         {'value': "JAPAN", 'label': 'Japan'},
                         {'value': "KOREA, REPUBLIC OF", 'label': 'South Korea'},
+                        {'value': 'NETHERLANDS', 'label' : 'Netherlands'},
+                        {'value': 'NEW ZEALAND', 'label' : 'New Zealand'},
+                        {'value': 'NORWAY', 'label' : 'Norway'},
+                        {'value': 'PHILIPPINES', 'label' : 'Philippines'},
+                        {'value': 'POLAND', 'label' : 'Poland'},
+                        {'value': 'PORTUGAL', 'label' : 'Portugal'},
+                        {'value': 'ROMANIA', 'label' : 'Romania'},
+                        {'value': 'RUSSIAN FEDERATION', 'label' : 'Russian Federation'},
                         {'value': "SPAIN", 'label': 'Spain'},
-                        {'value': "NETHERLANDS", 'label': 'Netherlands'},
-                        {'value': "NEW ZEALAND", 'label': 'New Zealand'},
-                        {'value': "NORWAY", 'label': 'Norway'},
                         {'value': "SOUTH AFRICA", 'label': 'South Africa'},
+                        {'value': 'SYRIAN ARAB REPUBLIC', 'label' : 'Syrian Arab Republic'},
                         {'value': "UKRAINE", 'label': 'Ukraine'},
                         {'value': "UNITED KINGDOM", 'label': 'United Kingdom'},
                         {'value': "UNITED STATES", 'label': 'United States'},
+                        {'value': 'UNKNOWN', 'label': 'Unknown'},
                     ]
                 ),
                 ddk.Row(ddk.Title('Parameter:', style={'font-size':'.8em', 'padding-left': '5px'})),
@@ -435,14 +479,17 @@ def show_platforms(map_in_variable, map_in_platform_type, map_in_country, map_in
         data_df = db.get_data(selection_code)
         trace_df = data_df.loc[data_df['platform_code']==selection_code]
         platform_trace = go.Scattermapbox(lat=trace_df["latitude"], lon=trace_df["longitude"], text=trace_df['trace_text'], mode='markers',
-                                          marker=dict(color=trace_df["millis"], colorscale='cividis_r', size=13), name=str(selection_code))
+                                          marker=dict(color=trace_df["millis"], colorscale='Greys', size=13), name=str(selection_code))
                         
                                           
     if map_in_window_info is not None:
         w_size = json.loads(map_in_window_info)
         map_h = (w_size['height'] - header_footer_fudge)/2
 
+    ui_revision = 1
+
     if map_in_variable is not None:
+        ui_revision = 2
         query = ""
         if isinstance(map_in_variable, list):
             if len(map_in_variable) > 0:
@@ -458,6 +505,7 @@ def show_platforms(map_in_variable, map_in_platform_type, map_in_country, map_in
             map_df = map_df[map_df['platform_code'].isin(has_data['platform_code'])]
 
     if map_in_platform_type is not None:
+        ui_revision = 3
         if isinstance(map_in_platform_type, str):
             map_df = map_df.loc[map_df['platform_type'] == map_in_platform_type]
         elif isinstance(map_in_platform_type, list):
@@ -471,6 +519,7 @@ def show_platforms(map_in_variable, map_in_platform_type, map_in_country, map_in
                 map_df = map_df.query(query)
     
     if map_in_country is not None:
+        ui_revision = 4
         if isinstance(map_in_country, str):
             map_df = map_df.loc[map_df['country'] == map_in_country]
         elif isinstance(map_in_country, list):
@@ -488,14 +537,15 @@ def show_platforms(map_in_variable, map_in_platform_type, map_in_country, map_in
     location_map = px.scatter_mapbox(map_df, lat='latitude', lon='longitude',  
                                      color=color_by,
                                      color_discrete_map=color_map,
-                                     hover_data=['text_time', 'latitude', 'longitude', 'platform_code'],
+                                     hover_data=['platform_type', 'text_time', 'latitude', 'longitude', 'platform_code', 'country'],
                                      custom_data=['platform_code','platform_type'], 
-                                     labels={"platform_type": "Platform Type"}
+                                     labels={"platform_type": "Platform Type"},
                                     )
     location_map.update_traces(marker_size=10, unselected=dict(marker=dict(opacity=.55)),)
     if platform_trace is not None:
         location_map.add_trace(platform_trace)
     location_map.update_layout(
+        uirevision=ui_revision,
         height=map_h,
         mapbox_style="white-bg",
         mapbox_layers=[

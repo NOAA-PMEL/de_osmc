@@ -53,7 +53,7 @@ def load_observations():
     locations_df = df.groupby('platform_code', as_index=False).last()
 
     counts_df = df.groupby('platform_code').count()
-    counts_df.reset_index(drop=True, inplace=True)
+    counts_df.reset_index(inplace=True)
 
     logger.info('Found ' + str(df.shape[0]) + ' observations to store.')
 
@@ -67,41 +67,6 @@ def load_observations():
     logger.info('Updating locations...')
     locations_df.to_sql(constants.locations_table, constants.postgres_engine, if_exists='replace', index=False)
 
-
-def just_load():
-    #url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated + '&time>=2022-08-01T00:00:00Z'
-    #url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated
-    url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated + '&time>=now-45days'
-
-    print('Reading data from ' + url)
-
-    df = pd.read_csv(url, skiprows=[1], dtype=constants.dtypes, parse_dates=True)
-
-    df = df.dropna(subset=['latitude','longitude'], how='any')
-    df = df.query('-90.0 <= latitude <= 90')
-    df = df.sort_values('time')
-    df.reset_index(drop=True, inplace=True)
-    df.loc[:,'millis'] = pd.to_datetime(df['time']).view(np.int64)
-    df.loc[:,'text_time'] = df['time'].astype(str)
-    df.loc[:,'trace_text'] = df['text_time'] + "<br>" + df['platform_code']
-
-    print('Preparing sub-sets for locations and counts.')
-    locations_df = df.groupby('platform_code', as_index=False).last()
-
-    counts_df = df.groupby('platform_code').count()
-    counts_df.reset_index(drop=True, inplace=True)
-
-    print('Found ' + str(df.shape[0]) + ' observations to store.')
-
-    # In the following command, we are saving the updated new data to the dataset_table using pandas
-    # and the SQLAlchemy engine we created above. When if_exists='append' we add the rows to our table
-    # and when if_exists='replace', a new table overwrites the old one.
-    print('Updating data...')
-    df.to_sql(constants.data_table, constants.postgres_engine, if_exists='replace', index=False, chunksize=1500, method='multi')
-    print('Updating counts...')
-    counts_df.to_sql(constants.counts_table, constants.postgres_engine, if_exists='replace', index=False)
-    print('Updating locations...')
-    locations_df.to_sql(constants.locations_table, constants.postgres_engine, if_exists='replace', index=False)
 
 @celery_app.task
 def trim_database():
@@ -168,7 +133,22 @@ def append_new_observations():
     locations_df = df.groupby('platform_code', as_index=False).last()
 
     counts_df = df.groupby('platform_code').count()
-    counts_df.reset_index(drop=True, inplace=True)
+    counts_df.reset_index(inplace=True)
+
+    logger.info('Updating counts...')
+    counts_df.to_sql(constants.counts_table, constants.postgres_engine, if_exists='replace', index=False)
+    logger.info('Updating locations...')
+    locations_df.to_sql(constants.locations_table, constants.postgres_engine, if_exists='replace', index=False)
+
+    
+@celery_app.task
+def counts_and_location():
+    df = db.get_data(None)
+    logger.info('Preparing sub-sets for locations and counts.')
+    locations_df = df.groupby('platform_code', as_index=False).last()
+
+    counts_df = df.groupby('platform_code').count()
+    counts_df.reset_index(inplace=True)
 
     logger.info('Updating counts...')
     counts_df.to_sql(constants.counts_table, constants.postgres_engine, if_exists='replace', index=False)
