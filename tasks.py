@@ -47,6 +47,7 @@ def load_observations():
     df.reset_index(drop=True, inplace=True)
     df.loc[:,'millis'] = pd.to_datetime(df['time']).view(np.int64)
     df.loc[:,'text_time'] = df['time'].astype(str)
+    # ['platform_type', 'text_time', 'latitude', 'longitude', 'platform_code', 'country'],
     df.loc[:,'trace_text'] = df['text_time'] + "<br>" + df['platform_code']
 
     logger.info('Preparing sub-sets for locations and counts.')

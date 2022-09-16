@@ -4,6 +4,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import dash_bootstrap_components as dbc
+import flask
+import urllib
 import pandas as pd
 import numpy as np
 import zc
@@ -17,7 +19,7 @@ import json
 
 app = Dash(
     __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP, 'legend_toggle.css']
+    external_stylesheets=[dbc.themes.BOOTSTRAP]
 )
 server = app.server  # expose server variable for Procfile
 
@@ -29,6 +31,7 @@ zoom = 1.4
 
 height_of_row=345
 header_footer_fudge = 150
+map_height = 450
 
 def cc_color_set(index):
     rgb = px.colors.convert_to_RGB_255(cc.glasbey_bw_minc_20[index])
@@ -52,7 +55,7 @@ platform_color = {
     'TROPICAL MOORED BUOYS': cc_color_set(12),
     'TSUNAMI WARNING STATIONS': cc_color_set(13),
     'UNKNOWN': cc_color_set(14),
-    'UNMANNED SURFACE VEHICLE': cc_color_set(15),
+    'UNCREWED SURFACE VEHICLE': cc_color_set(15),
     'VOLUNTEER OBSERVING SHIPS': cc_color_set(16),
     'VOSCLIM': cc_color_set(17),
     'WEATHER AND OCEAN OBS': cc_color_set(18),
@@ -177,15 +180,185 @@ select_graph = select_graph.update_layout(
 )
 
 app.layout = ddk.App([
-    dcc.Location(id='url'),
-    html.Div(id='window-info', style={'display': 'none'}),
+    dcc.Location(id='url', refresh=False),
+    dcc.Interval(id='trigger', n_intervals=0, 
+    max_intervals=0, #<-- only run once
+    interval=1),
     dcc.Store(id='map-info'),
+    dcc.Store(id='ui-state'),
     ddk.Header([
         ddk.Logo(src=app.get_asset_url('noaa-logo-rgb-2022.png'), style={'height':'90px'}),
         ddk.Title('Observing System Monitoring Center'),
         dcc.Loading(html.Div(id='map-loader', style={'float': 'right', 'display': 'none'}))
     ]),
-    ddk.Block (width=20, children=[
+    ddk.Block (id='control-block', width=20, children=[
+        ddk.Card(
+            children=[
+                ddk.Row(ddk.Title('Country:', style={'font-size':'.8em', 'padding-left':'5px'})),
+                dcc.Dropdown(
+                    id='country',
+                    clearable=True,
+                    multi=True,
+                    style={'padding-left': '10px'},
+                    options=[],
+                ),
+                ddk.Row(ddk.Title('Parameter:', style={'font-size':'.8em', 'padding-left': '5px'})),
+                dcc.Dropdown(
+                    id='variable',
+                    clearable=True,
+                    multi=True,
+                    style={'padding-left': '10px'},
+                    options=[],
+                ),
+                ddk.Row(ddk.Title('Platform Type:', style={'font-size':'.8em', 'padding-left': '5px'})),
+                dcc.Dropdown(
+                    id='platform-type',
+                    clearable=True,
+                    multi=True,
+                    style={'padding-left': '10px'},
+                    options=[]
+                ),
+                ddk.Row(ddk.Title('Color Markers by:', style={'font-size':'.8em', 'padding-left': '5px'})),
+                dcc.RadioItems(
+                    id='color-by',
+                    options=[],
+                ),
+                ddk.Row(ddk.Title('Find Platforms:', style={'font-size':'.8em', 'padding-left': '5px'})),
+                dcc.Dropdown(
+                    id='platform-code',
+                    clearable=True,
+                    multi=False,
+                    style={'padding-left': '10px'},
+                )
+            ]
+        )
+    ]),
+    ddk.Block(width=80, children=[
+        ddk.Card(id='map-card', children=[
+            ddk.CardHeader(id='map-card-header', 
+                           modal=True, 
+                           modal_config={'height': 90, 'width': 95}, 
+                           fullscreen=True
+                           ),
+            dcc.Graph(id='location-map', style={'padding-left': '20px'}),
+        ]),
+    ]),
+    ddk.Block(width=100, children=[
+        ddk.Card(width=100, children=[
+            ddk.CardHeader(id='plots-header', 
+                title='Plots...',
+                modal=True, 
+                modal_config={'height': 90, 'width': 95}, 
+                fullscreen=True,
+                children=[
+                    dcc.Dropdown(
+                        style={'margin-right': '50px', 'width':'250px'},
+                        id='markers',
+                        options=[
+                            {'label': 'Both lines and markers', 'value': 'both'},
+                            {'label': 'Markers only', 'value': 'markers'},
+                            {'label': 'Lines only', 'value': 'lines'}
+                        ],
+                        value='both',   
+                    )   
+                ]
+            ),
+            dcc.Loading(dcc.Graph(id='plots', style={'padding-left': '20px'})),
+        ])
+    ]),
+])
+
+
+##
+# This runs on-load and builds the control and sets the options and values of the controls based on the state of the URL
+@app.callback([
+    Output('control-block', 'children'),
+    Output('markers', 'value'),
+],[
+    Input('trigger', 'n_intervals'),
+]
+)
+def read_url(trigger):
+    print('firing read_url..')
+    out_platform_code = None
+    out_line_marker_setting = 'both'
+    out_platform_type = None
+    out_color_by = 'platform_type'
+    out_variable = None
+    out_country = None
+    
+    url = flask.request.referrer
+    parts = urllib.parse.urlparse(url)
+    params = urllib.parse.parse_qs(parts.query)
+
+    if 'markers' in params:
+        line_plot_markers = params['markers'][0]
+    
+    if 'platform_code' in params:
+        out_platform_code = params['platform_code'][0]
+
+    if 'platform_type' in params:
+        out_platform_type = params['platform_type']
+    
+    if 'color_by' in params:
+        out_color_by = params['color_by'][0]
+    
+    if 'variable' in params:
+        out_variable = params['variable']
+    
+    if 'country' in params:
+        out_country = params['country']
+
+    map_df = db.get_locations()
+    counts_df = db.get_counts()
+    if out_variable is not None:
+        query = ""
+        if isinstance(out_variable, list):
+            if len(out_variable) > 0:
+                for qidx, qvar in enumerate(out_variable):
+                    if qidx == 0:
+                        query = query + qvar + '> 0'
+                    else:
+                        query = query + ' or ' + qvar + '> 0'
+        elif isinstance(out_variable, str):
+            query = query + out_variable + '> 0'
+        if len(query) > 1:
+            has_data = counts_df.query(query)
+            map_df = map_df[map_df['platform_code'].isin(has_data['platform_code'])]
+
+    if out_platform_type is not None:
+        if isinstance(out_platform_type, str):
+            map_df = map_df.loc[map_df['platform_type'] == out_platform_type]
+        elif isinstance(out_platform_type, list):
+            query = ''
+            for pi, plat in enumerate(out_platform_type):
+                if pi == 0:
+                    query = query  + 'platform_type==\''+plat+'\''
+                else:
+                    query = query  + 'or platform_type==\''+plat+'\''
+            if len(query) > 1:
+                map_df = map_df.query(query)
+    
+    if out_country is not None:
+        if isinstance(out_country, str):
+            map_df = map_df.loc[map_df['country'] == out_country]
+        elif isinstance(out_country, list):
+            query = ''
+            for ci, cntry in enumerate(out_country):
+                if ci == 0:
+                    query = query  + 'country==\''+cntry+'\''
+                else:
+                    query = query  + 'or country==\''+cntry+'\''
+            if len(query) > 1:
+                map_df = map_df.query(query)
+    
+    codes_to_show = pd.unique(map_df['platform_code'])
+    platform_code_options = []
+    codes_to_show.sort()
+    for codey in codes_to_show:
+       platform_code_options.append({'label': codey, 'value': codey})
+
+    control_block = [
         ddk.Card(
             children=[
                 ddk.Row(ddk.Title('Country:', style={'font-size':'.8em', 'padding-left':'5px'})),
@@ -230,7 +403,8 @@ app.layout = ddk.App([
                         {'value': "UNITED KINGDOM", 'label': 'United Kingdom'},
                         {'value': "UNITED STATES", 'label': 'United States'},
                         {'value': 'UNKNOWN', 'label': 'Unknown'},
-                    ]
+                    ],
+                    value=out_country
                 ),
                 ddk.Row(ddk.Title('Parameter:', style={'font-size':'.8em', 'padding-left': '5px'})),
                 dcc.Dropdown(
@@ -247,7 +421,8 @@ app.layout = ddk.App([
                         {'value':'windspd','label': 'Wind Speed'},
                         {'value':'winddir','label': 'Wind Direction'},
                         {'value':'clouds','label': 'Clouds'},
-                    ]
+                    ],
+                    value=out_variable
                 ),
                 ddk.Row(ddk.Title('Platform Type:', style={'font-size':'.8em', 'padding-left': '5px'})),
                 dcc.Dropdown(
@@ -255,6 +430,7 @@ app.layout = ddk.App([
                     clearable=True,
                     multi=True,
                     style={'padding-left': '10px'},
+                    value=out_platform_type,
                     options=[
                         {'label': 'ARGO', 'value': 'ARGO'},
                         {'label': 'AUTONOMOUS PINNIPEDS', 'value': 'AUTONOMOUS PINNIPEDS'},
@@ -286,7 +462,7 @@ app.layout = ddk.App([
                         {'label': 'Platform Type', 'value': 'platform_type'},
                         {'label': 'Country', 'value': 'country'},
                     ],
-                    value='platform_type'
+                    value=out_color_by
                 ),
                 ddk.Row(ddk.Title('Find Platforms:', style={'font-size':'.8em', 'padding-left': '5px'})),
                 dcc.Dropdown(
@@ -294,38 +470,24 @@ app.layout = ddk.App([
                     clearable=True,
                     multi=False,
                     style={'padding-left': '10px'},
-                    options=[
-                        
-                    ]
+                    options=platform_code_options,
+                    value = out_platform_code
                 )
             ]
-        )
-    ]),
-    ddk.Block(width=80, children=[
-        ddk.Card(children=[
-            ddk.CardHeader(id='map-card-header', modal=True, modal_config={'height': 90, 'width': 95}, fullscreen=True),
-            ddk.Graph(id='location-map', style={'padding-left': '20px'}),
-        ]),
-    ]),
-    ddk.Block(width=100, children=[
-        ddk.Card(children=[
-            dcc.Loading(
-                ddk.CardHeader(id='plots-header', modal=True, modal_config={'height': 90, 'width': 95}, fullscreen=True)
-            ),
-            ddk.Graph(id='plots', style={'padding-left': '20px'}),
-        ]),
-    ]),
-])
+        )]
+
+    return [control_block, out_line_marker_setting]
 
 
 @app.callback([
-    Output('platform-code', 'options')
+    Output('platform-code', 'options'),
 ],[
     Input('variable', 'value'), 
     Input('platform-type', 'value'),
     Input('country', 'value'),
-])
+], prevent_initial_call=True)
 def set_platform_list(list_variable_in, list_platform_type_in, list_country_in):
+    print('set_platform_list...')
     map_df = db.get_locations()
     counts_df = db.get_counts()
     if list_variable_in is not None:
@@ -384,6 +546,7 @@ def set_platform_list(list_variable_in, list_platform_type_in, list_country_in):
     Input('location-map', 'relayoutData')
 ])
 def record_map_change(relay_data):
+    print('fire record_map_change...')
     center = {'lon': 0.0, 'lat': 0.0}
     zoom = 1.4
     if relay_data is not None:
@@ -395,57 +558,133 @@ def record_map_change(relay_data):
     return [json.dumps(map_info)]
 
 
-app.clientside_callback(
-    """
-    function(href) {
-        var w = window.innerWidth;
-        var h = window.innerHeight;
-        return JSON.stringify({'height': h, 'width': w});
-    }
-    """,
-    Output('window-info', 'children'),
-    Input('url', 'href')
-)
-
-
 @app.callback(
     [
-        Output('platform-code', 'value'),
+        Output('platform-code', 'value')
     ],
     [
-        Input('location-map', 'clickData'),
-    ]
+        Input('location-map', 'clickData')
+    ], prevent_initial_call=True
 )
-def set_platform_from_map(in_map_clicky):
-    selection_value = None
-    if in_map_clicky is not None:
-        fst_point = in_map_clicky['points'][0]
-        selection_value = fst_point['customdata'][0]
-    return [selection_value]
+def set_platform_code_from_map(state_in_click):
+    out_platform_code = None
+    if state_in_click is not None:
+        fst_point = state_in_click['points'][0]
+        out_platform_code = fst_point['customdata']
+    return [out_platform_code]
 
 
 @app.callback(
     [
-        Output('location-map', 'figure'),
-        Output('map-card-header', 'children'),
-        Output('map-loader', 'children')
+        Output('ui-state', 'data'),
+        Output('url', 'search')
     ],
     [
         Input('variable', 'value'), 
         Input('platform-type', 'value'),
         Input('country', 'value'),
         Input('color-by', 'value'),
-        Input('location-map', 'clickData'),
         Input('platform-code', 'value'),
-        Input('window-info', 'children')
+        Input('markers', 'value'),
     ],
     [
         State('map-info', 'data')
-    ]
+    ], prevent_initial_call=True
 )
-def show_platforms(map_in_variable, map_in_platform_type, map_in_country, map_in_color_by, map_in_click, map_in_pcode, map_in_window_info, map_in_map_info):
+def set_ui_state(state_in_variable, state_in_platform_type, state_in_country, state_in_color_by, state_in_pcode, state_in_markers, state_in_map_info):
+    print('firing set_ui_state...')
+    trigger_id = ctx.triggered_id
+    ui_state_out = {}
+    query = '?'
+    out_variable = None
+    if state_in_variable is not None:
+        if isinstance(state_in_variable, list):
+            for vidx, v in enumerate(state_in_variable):
+                if vidx == 0:
+                    query = query + 'variable='+v
+                else:
+                   query = query + '&variable='+v
+        else:
+            query = query + 'variable='+out_variable
+        out_variable = state_in_variable
+        
+    ui_state_out['variable'] = out_variable
 
-    map_h = 800/2
+    out_platform_type = None
+    if state_in_platform_type is not None:
+        out_platform_type = state_in_platform_type
+        if isinstance(state_in_platform_type, list):
+            for pt in state_in_platform_type:
+                if len(query) > 1:
+                    query = query + '&'
+                query = query + 'platform_type=' + pt
+        else:
+            if len(query) > 1:
+                query = query + '&'
+            query = query + 'platform_type=' + out_platform_type
+    ui_state_out['platform_type'] = out_platform_type
+
+    out_country = None
+    if state_in_country is not None:
+        out_country = state_in_country
+        if isinstance(state_in_country, list):
+            for c in state_in_country:
+                if len(query) > 1:
+                    query = query + '&'
+                query = query + 'country=' + c
+        else:
+            query = query + 'country=' + out_country
+    ui_state_out['country'] = out_country
+
+    out_color_by = 'platform_type'
+    if state_in_color_by is not None:
+        out_color_by = state_in_color_by
+    if len(query) > 1:
+        query = query + '&'
+    query = query + 'color_by=' + out_color_by
+    ui_state_out['color_by'] = out_color_by
+
+    out_platform_code = state_in_pcode
+    if out_platform_code is not None:
+        if len(query) > 1:
+            query = query + '&'
+        query = query + 'platform_code=' + out_platform_code
+    ui_state_out['platform_code'] = out_platform_code
+
+    out_markers = 'both'
+    if state_in_markers is not None:
+        out_markers = state_in_markers
+    ui_state_out['markers'] = out_markers
+
+    if state_in_map_info is not None:
+        query_map_info = json.loads(state_in_map_info)
+        location_center = query_map_info['center']
+        location_zoom = query_map_info['zoom']
+        # query = query + '&lat=' + str(location_center['lat']) + '&lon=' + str(location_center['lon']) + '&zoom='+str(location_zoom)
+
+    return [json.dumps(ui_state_out), query]
+
+@app.callback(
+    [
+        Output('location-map', 'figure'),
+        Output('map-card-header', 'children'),
+        Output('map-loader', 'children'),
+    ],
+    [
+        Input('ui-state', 'data'),
+    ],
+    [
+        State('map-info', 'data')
+    ], prevent_initial_call=True
+)
+def show_platforms(in_ui_state, map_in_map_info):
+    print('firing show_platforms...')
+    
+    if in_ui_state is not None and len(in_ui_state) > 0:
+        map_ui_state = json.loads(in_ui_state)
+    else:
+        raise exceptions.PreventUpdate
+    print(map_ui_state)
 
     location_center = center
     location_zoom = zoom
@@ -458,8 +697,8 @@ def show_platforms(map_in_variable, map_in_platform_type, map_in_country, map_in
     counts_df = db.get_counts()
 
     color_by = 'platform_type'
-    if map_in_color_by is not None:
-        color_by = map_in_color_by
+    if 'color_by' in map_ui_state:
+        color_by = map_ui_state['color_by']
 
     if color_by == 'platform_type':
         color_map = platform_color
@@ -469,27 +708,23 @@ def show_platforms(map_in_variable, map_in_platform_type, map_in_country, map_in
     platform_trace = None
     selection_code = None
 
-    input_id = ctx.triggered_id if not None else 'No platform'
-    if input_id == 'location-map' and map_in_click is not None:
-        fst_point = map_in_click['points'][0]
-        selection_code = fst_point['customdata'][0]
-    if input_id == 'platform-code' and map_in_pcode is not None:
-        selection_code = map_in_pcode
+    selection_code = map_ui_state['platform_code']
     if selection_code is not None:
         data_df = db.get_data(selection_code)
         trace_df = data_df.loc[data_df['platform_code']==selection_code]
         platform_trace = go.Scattermapbox(lat=trace_df["latitude"], lon=trace_df["longitude"], text=trace_df['trace_text'], mode='markers',
-                                          marker=dict(color=trace_df["millis"], colorscale='Greys', size=13), name=str(selection_code))
-                        
+                                          marker=dict(color=trace_df["millis"], colorscale='Greys', size=13), name=str(selection_code),
+                                          uid=9000)       
                                           
-    if map_in_window_info is not None:
-        w_size = json.loads(map_in_window_info)
-        map_h = (w_size['height'] - header_footer_fudge)/2
 
-    ui_revision = 1
+    map_in_variable = map_ui_state['variable']
+    map_in_platform_type = map_ui_state['platform_type']
+    map_in_country = map_ui_state['country']
+
+    ui_revision = '*base*'
 
     if map_in_variable is not None:
-        ui_revision = 2
+        ui_revision = '*variable*'
         query = ""
         if isinstance(map_in_variable, list):
             if len(map_in_variable) > 0:
@@ -505,7 +740,7 @@ def show_platforms(map_in_variable, map_in_platform_type, map_in_country, map_in
             map_df = map_df[map_df['platform_code'].isin(has_data['platform_code'])]
 
     if map_in_platform_type is not None:
-        ui_revision = 3
+        ui_revision = '*platform_type*'
         if isinstance(map_in_platform_type, str):
             map_df = map_df.loc[map_df['platform_type'] == map_in_platform_type]
         elif isinstance(map_in_platform_type, list):
@@ -519,7 +754,7 @@ def show_platforms(map_in_variable, map_in_platform_type, map_in_country, map_in
                 map_df = map_df.query(query)
     
     if map_in_country is not None:
-        ui_revision = 4
+        ui_revision = '*country*'
         if isinstance(map_in_country, str):
             map_df = map_df.loc[map_df['country'] == map_in_country]
         elif isinstance(map_in_country, list):
@@ -534,19 +769,32 @@ def show_platforms(map_in_variable, map_in_platform_type, map_in_country, map_in
 
     platform_count = map_df.shape[0]
     title = 'Platform Locations - ' + str(platform_count) + ' platforms reported.'
-    location_map = px.scatter_mapbox(map_df, lat='latitude', lon='longitude',  
-                                     color=color_by,
-                                     color_discrete_map=color_map,
-                                     hover_data=['platform_type', 'text_time', 'latitude', 'longitude', 'platform_code', 'country'],
-                                     custom_data=['platform_code','platform_type'], 
-                                     labels={"platform_type": "Platform Type"},
-                                    )
-    location_map.update_traces(marker_size=10, unselected=dict(marker=dict(opacity=.55)),)
+    # In order to keep track of the traces that are selected and unselected, each trace has to have a unique ID.
+    # The only way I've figured out how to do that is to make each trace for each category individually.  
+    # The loop below replaces the px.scatter_mapbox call
+    # location_map = px.scatter_mapbox(map_df, lat='latitude', lon='longitude',  
+    #                                  color=color_by,
+    #                                  color_discrete_map=color_map,
+    #                                  hover_data=['platform_type', 'text_time', 'latitude', 'longitude', 'platform_code', 'country'],
+    #                                  custom_data=['platform_code','platform_type'], 
+    #                                  labels={"platform_type": "Platform Type"})
+    location_map = go.Figure()
+    categories = map_df[color_by].unique().tolist()
+    categories.sort()
+    for icat, category in enumerate(categories):
+        map_trace_df = map_df.loc[map_df[color_by] == category]
+        marker_color = color_map[category]
+        platform_dots = go.Scattermapbox(lat=map_trace_df["latitude"], lon=map_trace_df["longitude"], mode='markers',
+                                          marker=dict(color=marker_color, size=10), name=str(category),
+                                          hovertext=map_trace_df['trace_text'],
+                                          customdata=map_trace_df['platform_code'], 
+                                          uid=icat)
+        location_map.add_trace(platform_dots)
+    location_map.update_layout(uirevision=ui_revision)
     if platform_trace is not None:
         location_map.add_trace(platform_trace)
     location_map.update_layout(
-        uirevision=ui_revision,
-        height=map_h,
+        height=map_height,
         mapbox_style="white-bg",
         mapbox_layers=[
             {
@@ -572,26 +820,29 @@ def show_platforms(map_in_variable, map_in_platform_type, map_in_country, map_in
 
 @app.callback([
     Output('plots', 'figure'),
-    Output('plots-header', 'children'),
+    Output('plots-header', 'title'),
 ],[
-    Input('location-map', 'clickData'),
-    Input('platform-code', 'value')
+    Input('ui-state', 'data')
 ], prevent_initial_call=True)
-def make_plots(selection_click, selection_menu):
+def make_plots(plot_in_ui_state):
+    print('firing make_plots...')
+    if plot_in_ui_state is not None:
+        ui_state = json.loads(plot_in_ui_state)
+    else:
+        raise exceptions.PreventUpdate
     
-    if selection_click is None and selection_menu is None:
-        return [select_graph, 'Click on a platform on the map or select one from the menu...']
+    print(ui_state)
 
-    selection_code = None
-    input_id = ctx.triggered_id if not None else 'No platform'
-    if input_id == 'location-map' and selection_click is not None:
-        fst_point = selection_click['points'][0]
-        selection_code = fst_point['customdata'][0]
-    if input_id == 'platform-code' and selection_menu is not None:
-        selection_code = selection_menu
-    
+    marker_menu = ui_state['markers']
+    if marker_menu is None:
+        marker_menu = 'lines+markers'
+    elif marker_menu == 'both':
+        marker_menu = 'lines+markers'
+
+    selection_code = ui_state['platform_code']
+
     if selection_code is None:
-        return [select_graph, 'Click on a platform on the map or select one from the menu...']
+         return [select_graph, 'Select a platform from the map or menu...']
 
     plot_df = db.get_data(selection_code)
     subplots = {}
@@ -604,7 +855,7 @@ def make_plots(selection_click, selection_menu):
         dfvar = plot_df[['time',var]].copy()
         dfvar.dropna(subset=[var], how='all', inplace=True) # do we want to drop nan or not, may have rows from other parameters that are "false" nan!!!
         if dfvar.shape[0] > 2:
-            varplot = go.Scatter(x=dfvar['time'], y=dfvar[var], name=var, mode='lines+markers')
+            varplot = go.Scatter(x=dfvar['time'], y=dfvar[var], name=var, mode=marker_menu)
             subplots[var] = varplot
             titles.append(var)
     for var in constants.depth_variables:
@@ -626,7 +877,7 @@ def make_plots(selection_click, selection_menu):
                                      mode='markers', name=var, text=dfvar[var])
                 titles.append(var)
             else:
-                varplot = go.Scattergl(x=dfvar['time'], y=dfvar[var], name=var, mode='lines+markers', marker=dict(showscale=False))
+                varplot = go.Scattergl(x=dfvar['time'], y=dfvar[var], name=var, mode=marker_menu, marker=dict(showscale=False))
                 titles.append(var + ' at depth ' + str(depths[0]))
             subplots[var] = varplot
 

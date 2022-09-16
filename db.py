@@ -4,9 +4,11 @@ import datetime
 
 
 def trim(days_ago):
-    delete = 'DELETE from {} WHERE TIME < NOW() - \''+str(days_ago)+' days\'::interval;'
+    n = datetime.datetime.now()
+    r = n - datetime.timedelta(days=days_ago)
+    delete = 'DELETE FROM {} WHERE TIME < \'' + r.isoformat() + '\';'
     print(delete)
-    ## DEBUG constants.postgres_engine.execute(delete.format(constants.data_table))
+    constants.postgres_engine.execute(delete.format(constants.data_table))
 
 
 def get_between_days_ago(ago1, ago2):
