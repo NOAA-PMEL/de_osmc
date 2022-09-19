@@ -17,6 +17,9 @@ import json
 # import ssl
 # ssl._create_default_https_context = ssl._create_unverified_context
 
+cones_url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_cones.csv?latitude,longitude,name,index,time&orderBy("name,index")'
+
+
 app = Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP]
@@ -33,34 +36,40 @@ height_of_row=345
 header_footer_fudge = 150
 map_height = 450
 
-def cc_color_set(index):
-    rgb = px.colors.convert_to_RGB_255(cc.glasbey_bw_minc_20[index])
+def cc_color_set(index, palette):
+    rgb = px.colors.convert_to_RGB_255(palette[index])
     hexi = '#%02x%02x%02x' % rgb
     return hexi
+
+def cc_color_set_transparent(index, palette, alpha):
+    h = palette[index].lstrip('#')
+    rgb = tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+    color = 'rgba(' + str(rgb[0]) + ',' + str(rgb[1]) + ',' + str(rgb[2]) + ',' + str(alpha) + ')'
+    return color
     
 
 platform_color = {
-    'ARGO' : cc_color_set(0),
-    'AUTONOMOUS PINNIPEDS': cc_color_set(1),
-    'C-MAN WEATHER STATIONS': cc_color_set(2), 
-    'CLIMATE REFERENCE MOORED BUOYS': cc_color_set(3), 
-    'DRIFTING BUOYS': cc_color_set(4), 
-    'GLIDERS': cc_color_set(5),
-    'ICE BUOYS': cc_color_set(6),
-    'MOORED BUOYS': cc_color_set(7),
-    'RESEARCH': cc_color_set(8),
-    'SHIPS': cc_color_set(9),
-    'SHORE AND BOTTOM STATIONS': cc_color_set(10),
-    'TIDE GAUGE STATIONS': cc_color_set(11),
-    'TROPICAL MOORED BUOYS': cc_color_set(12),
-    'TSUNAMI WARNING STATIONS': cc_color_set(13),
-    'UNKNOWN': cc_color_set(14),
-    'UNCREWED SURFACE VEHICLE': cc_color_set(15),
-    'VOLUNTEER OBSERVING SHIPS': cc_color_set(16),
-    'VOSCLIM': cc_color_set(17),
-    'WEATHER AND OCEAN OBS': cc_color_set(18),
-    'WEATHER BUOYS': cc_color_set(19),
-    'WEATHER OBS': cc_color_set(20),
+    'ARGO' : cc_color_set(0, cc.glasbey_bw_minc_20),
+    'AUTONOMOUS PINNIPEDS': cc_color_set(1, cc.glasbey_bw_minc_20),
+    'C-MAN WEATHER STATIONS': cc_color_set(2, cc.glasbey_bw_minc_20), 
+    'CLIMATE REFERENCE MOORED BUOYS': cc_color_set(3, cc.glasbey_bw_minc_20), 
+    'DRIFTING BUOYS': cc_color_set(4, cc.glasbey_bw_minc_20), 
+    'GLIDERS': cc_color_set(5, cc.glasbey_bw_minc_20),
+    'ICE BUOYS': cc_color_set(6, cc.glasbey_bw_minc_20),
+    'MOORED BUOYS': cc_color_set(7, cc.glasbey_bw_minc_20),
+    'RESEARCH': cc_color_set(8, cc.glasbey_bw_minc_20),
+    'SHIPS': cc_color_set(9, cc.glasbey_bw_minc_20),
+    'SHORE AND BOTTOM STATIONS': cc_color_set(10, cc.glasbey_bw_minc_20),
+    'TIDE GAUGE STATIONS': cc_color_set(11, cc.glasbey_bw_minc_20),
+    'TROPICAL MOORED BUOYS': cc_color_set(12, cc.glasbey_bw_minc_20),
+    'TSUNAMI WARNING STATIONS': cc_color_set(13, cc.glasbey_bw_minc_20),
+    'UNKNOWN': cc_color_set(14, cc.glasbey_bw_minc_20),
+    'UNCREWED SURFACE VEHICLE': cc_color_set(15, cc.glasbey_bw_minc_20),
+    'VOLUNTEER OBSERVING SHIPS': cc_color_set(16, cc.glasbey_bw_minc_20),
+    'VOSCLIM': cc_color_set(17, cc.glasbey_bw_minc_20),
+    'WEATHER AND OCEAN OBS': cc_color_set(18, cc.glasbey_bw_minc_20),
+    'WEATHER BUOYS': cc_color_set(19, cc.glasbey_bw_minc_20),
+    'WEATHER OBS': cc_color_set(20, cc.glasbey_bw_minc_20),
 }
 
 # platform_color = {
@@ -88,40 +97,40 @@ platform_color = {
 # }
 
 country_color = {
-    'AUSTRALIA' : cc_color_set(21),
-    'BENIN' : cc_color_set(22),
-    'BRAZIL' : cc_color_set(23),
-    'BULGARIA' : cc_color_set(24),
-    'CANADA' : cc_color_set(25),
-    'CHINA' : cc_color_set(26),
-    'CROATIA' : cc_color_set(27),
-    'EL SALVADOR' : cc_color_set(28),
-    'EUROPEAN UNION' : cc_color_set(29),
-    'FRANCE' : cc_color_set(30),
-    'GERMANY' : cc_color_set(31),
-    'GREECE' : cc_color_set(32),
-    'HONG KONG' : cc_color_set(33),
-    'INDIA' : cc_color_set(34),
-    'IRAN, ISLAMIC REPUBLIC OF' : cc_color_set(35),
-    'IRELAND' : cc_color_set(36),
-    'ISRAEL' : cc_color_set(37),
-    'ITALY' : cc_color_set(38),
-    'JAPAN' : cc_color_set(39),
-    'KOREA, REPUBLIC OF' : cc_color_set(40),
-    'NETHERLANDS' : cc_color_set(41),
-    'NEW ZEALAND' : cc_color_set(42),
-    'NORWAY' : cc_color_set(43),
-    'PHILIPPINES' : cc_color_set(44),
-    'POLAND' : cc_color_set(45),
-    'PORTUGAL' : cc_color_set(46),
-    'ROMANIA' : cc_color_set(47),
-    'RUSSIAN FEDERATION' : cc_color_set(48),
-    'SOUTH AFRICA' : cc_color_set(49),
-    'SPAIN' : cc_color_set(50),
-    'SYRIAN ARAB REPUBLIC' : cc_color_set(51),
-    'UNITED KINGDOM' : cc_color_set(52),
-    'UNITED STATES' : cc_color_set(53),
-    'UNKNOWN' : cc_color_set(54),
+    'AUSTRALIA' : cc_color_set(21, cc.glasbey_bw_minc_20),
+    'BENIN' : cc_color_set(22, cc.glasbey_bw_minc_20),
+    'BRAZIL' : cc_color_set(23, cc.glasbey_bw_minc_20),
+    'BULGARIA' : cc_color_set(24, cc.glasbey_bw_minc_20),
+    'CANADA' : cc_color_set(25, cc.glasbey_bw_minc_20),
+    'CHINA' : cc_color_set(26, cc.glasbey_bw_minc_20),
+    'CROATIA' : cc_color_set(27, cc.glasbey_bw_minc_20),
+    'EL SALVADOR' : cc_color_set(28, cc.glasbey_bw_minc_20),
+    'EUROPEAN UNION' : cc_color_set(29, cc.glasbey_bw_minc_20),
+    'FRANCE' : cc_color_set(30, cc.glasbey_bw_minc_20),
+    'GERMANY' : cc_color_set(31, cc.glasbey_bw_minc_20),
+    'GREECE' : cc_color_set(32, cc.glasbey_bw_minc_20),
+    'HONG KONG' : cc_color_set(33, cc.glasbey_bw_minc_20),
+    'INDIA' : cc_color_set(34, cc.glasbey_bw_minc_20),
+    'IRAN, ISLAMIC REPUBLIC OF' : cc_color_set(35, cc.glasbey_bw_minc_20),
+    'IRELAND' : cc_color_set(36, cc.glasbey_bw_minc_20),
+    'ISRAEL' : cc_color_set(37, cc.glasbey_bw_minc_20),
+    'ITALY' : cc_color_set(38, cc.glasbey_bw_minc_20),
+    'JAPAN' : cc_color_set(39, cc.glasbey_bw_minc_20),
+    'KOREA, REPUBLIC OF' : cc_color_set(40, cc.glasbey_bw_minc_20),
+    'NETHERLANDS' : cc_color_set(41, cc.glasbey_bw_minc_20),
+    'NEW ZEALAND' : cc_color_set(42, cc.glasbey_bw_minc_20),
+    'NORWAY' : cc_color_set(43, cc.glasbey_bw_minc_20),
+    'PHILIPPINES' : cc_color_set(44, cc.glasbey_bw_minc_20),
+    'POLAND' : cc_color_set(45, cc.glasbey_bw_minc_20),
+    'PORTUGAL' : cc_color_set(46, cc.glasbey_bw_minc_20),
+    'ROMANIA' : cc_color_set(47, cc.glasbey_bw_minc_20),
+    'RUSSIAN FEDERATION' : cc_color_set(48, cc.glasbey_bw_minc_20),
+    'SOUTH AFRICA' : cc_color_set(49, cc.glasbey_bw_minc_20),
+    'SPAIN' : cc_color_set(50, cc.glasbey_bw_minc_20),
+    'SYRIAN ARAB REPUBLIC' : cc_color_set(51, cc.glasbey_bw_minc_20),
+    'UNITED KINGDOM' : cc_color_set(52, cc.glasbey_bw_minc_20),
+    'UNITED STATES' : cc_color_set(53, cc.glasbey_bw_minc_20),
+    'UNKNOWN' : cc_color_set(54, cc.glasbey_bw_minc_20),
 }
 
 test_file = 'data/nc_osmc_data_rt_test.csv'
@@ -279,7 +288,6 @@ app.layout = ddk.App([
 ]
 )
 def read_url(trigger):
-    print('firing read_url..')
     out_platform_code = None
     out_line_marker_setting = 'both'
     out_platform_type = None
@@ -487,7 +495,6 @@ def read_url(trigger):
     Input('country', 'value'),
 ], prevent_initial_call=True)
 def set_platform_list(list_variable_in, list_platform_type_in, list_country_in):
-    print('set_platform_list...')
     map_df = db.get_locations()
     counts_df = db.get_counts()
     if list_variable_in is not None:
@@ -546,7 +553,6 @@ def set_platform_list(list_variable_in, list_platform_type_in, list_country_in):
     Input('location-map', 'relayoutData')
 ])
 def record_map_change(relay_data):
-    print('fire record_map_change...')
     center = {'lon': 0.0, 'lat': 0.0}
     zoom = 1.4
     if relay_data is not None:
@@ -592,7 +598,6 @@ def set_platform_code_from_map(state_in_click):
     ], prevent_initial_call=True
 )
 def set_ui_state(state_in_variable, state_in_platform_type, state_in_country, state_in_color_by, state_in_pcode, state_in_markers, state_in_map_info):
-    print('firing set_ui_state...')
     trigger_id = ctx.triggered_id
     ui_state_out = {}
     query = '?'
@@ -678,13 +683,17 @@ def set_ui_state(state_in_variable, state_in_platform_type, state_in_country, st
     ], prevent_initial_call=True
 )
 def show_platforms(in_ui_state, map_in_map_info):
-    print('firing show_platforms...')
     
+    cones_df = None
+    try:
+        cones_df = pd.read_csv(cones_url, skiprows=[1])
+    except:
+        print('load_platforms: No cones found.')
+
     if in_ui_state is not None and len(in_ui_state) > 0:
         map_ui_state = json.loads(in_ui_state)
     else:
         raise exceptions.PreventUpdate
-    print(map_ui_state)
 
     location_center = center
     location_zoom = zoom
@@ -815,6 +824,26 @@ def show_platforms(in_ui_state, map_in_map_info):
         ),
         modebar_orientation='v',
     )
+
+    cone_colors = px.colors.qualitative.Light24
+
+    if cones_df is not None and cones_df.shape[0] > 1:
+        cones = cones_df['name'].unique()
+        for inx, cone in enumerate(cones):                        
+            fill_color = cc_color_set_transparent(inx, px.colors.qualitative.Light24, 0.5)
+            line_color = cone_colors[inx]
+            x = cones_df.loc[cones_df['name'] == cone, 'longitude']
+            y = cones_df.loc[cones_df['name'] == cone, 'latitude']
+            cone_map = go.Scattermapbox(lon=x,
+                        lat=y,
+                        mode='lines',
+                        name=cone,
+                        fill='toself',
+                        hoverinfo='name',
+                        hoverlabel={'namelength': -1},
+                        fillcolor=fill_color,
+                        line=dict(color=line_color))
+            location_map.add_trace(cone_map)
     return [location_map, title, 'done']
 
 
@@ -825,14 +854,11 @@ def show_platforms(in_ui_state, map_in_map_info):
     Input('ui-state', 'data')
 ], prevent_initial_call=True)
 def make_plots(plot_in_ui_state):
-    print('firing make_plots...')
     if plot_in_ui_state is not None:
         ui_state = json.loads(plot_in_ui_state)
     else:
         raise exceptions.PreventUpdate
     
-    print(ui_state)
-
     marker_menu = ui_state['markers']
     if marker_menu is None:
         marker_menu = 'lines+markers'
