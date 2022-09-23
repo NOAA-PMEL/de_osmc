@@ -18,7 +18,7 @@ import json
 # ssl._create_default_https_context = ssl._create_unverified_context
 
 cones_url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_cones.csv?latitude,longitude,name,index,time&orderBy("name,index")'
-
+data_url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60'
 
 app = Dash(
     __name__,
@@ -34,7 +34,7 @@ zoom = 1.4
 
 height_of_row=345
 header_footer_fudge = 150
-map_height = 450
+map_height = 520
 
 def cc_color_set(index, palette):
     rgb = px.colors.convert_to_RGB_255(palette[index])
@@ -195,6 +195,7 @@ app.layout = ddk.App([
     interval=1),
     dcc.Store(id='map-info'),
     dcc.Store(id='ui-state'),
+    dcc.Store(id='download-url'),
     ddk.Header([
         ddk.Logo(src=app.get_asset_url('noaa-logo-rgb-2022.png'), style={'height':'90px'}),
         ddk.Title('Observing System Monitoring Center'),
@@ -238,6 +239,29 @@ app.layout = ddk.App([
                     clearable=True,
                     multi=False,
                     style={'padding-left': '10px'},
+                ),
+                html.Hr(style={'border': '1px solid black'}),
+                ddk.Row(ddk.Title('Plot Options:', style={'font-size':'.8em', 'padding-left': '5px'})),
+                dcc.Dropdown(
+                    id='markers',
+                    options=[
+                        {'label': 'Both lines and markers', 'value': 'both'},
+                        {'label': 'Markers only', 'value': 'markers'},
+                        {'label': 'Lines only', 'value': 'lines'}
+                    ],
+                    value='both',   
+                ),
+                html.Hr(style={'border': '1px solid black'}),
+                ddk.Row(dcc.Loading(html.A(html.Button(id='download-button', children=['Download'], style={'font-size':'.8em', 'padding-left': '5px'},), target='_blank', id='download-link'))),
+                dcc.Dropdown(
+                    style={'margin-right': '5px'},
+                    id='download-format',
+                    options=[
+                        {'label': 'CSV', 'value': '.csv'},
+                        {'label': 'netCDF', 'value': '.ncCF'},
+                        {'label': 'HTML', 'value': '.htmlTable'}
+                    ],
+                    placeholder='Select Download Format',   
                 )
             ]
         )
@@ -259,18 +283,6 @@ app.layout = ddk.App([
                 modal=True, 
                 modal_config={'height': 90, 'width': 95}, 
                 fullscreen=True,
-                children=[
-                    dcc.Dropdown(
-                        style={'margin-right': '50px', 'width':'250px'},
-                        id='markers',
-                        options=[
-                            {'label': 'Both lines and markers', 'value': 'both'},
-                            {'label': 'Markers only', 'value': 'markers'},
-                            {'label': 'Lines only', 'value': 'lines'}
-                        ],
-                        value='both',   
-                    )   
-                ]
             ),
             dcc.Loading(dcc.Graph(id='plots', style={'padding-left': '20px'})),
         ])
@@ -480,6 +492,29 @@ def read_url(trigger):
                     style={'padding-left': '10px'},
                     options=platform_code_options,
                     value = out_platform_code
+                ),
+                html.Hr(style={'border': '1px solid black'}),
+                ddk.Row(ddk.Title('Plot Options:', style={'font-size':'.8em', 'padding-left': '5px'})),
+                dcc.Dropdown(
+                    id='markers',
+                    options=[
+                        {'label': 'Both lines and markers', 'value': 'both'},
+                        {'label': 'Markers only', 'value': 'markers'},
+                        {'label': 'Lines only', 'value': 'lines'}
+                    ],
+                    value='both',   
+                ),
+                html.Hr(style={'border': '1px solid black'}),
+                ddk.Row(dcc.Loading(html.A(html.Button(id='download-button', children=['Download'], style={'font-size':'.8em', 'padding-left': '5px'},), target='_blank', id='download-link'))),
+                dcc.Dropdown(
+                    style={'margin-right': '5px'},
+                    id='download-format',
+                    options=[
+                        {'label': 'CSV', 'value': '.csv'},
+                        {'label': 'netCDF', 'value': '.ncCF'},
+                        {'label': 'HTML', 'value': '.htmlTable'}
+                    ],
+                    placeholder='Select Download Format',   
                 )
             ]
         )]
@@ -850,6 +885,8 @@ def show_platforms(in_ui_state, map_in_map_info):
 @app.callback([
     Output('plots', 'figure'),
     Output('plots-header', 'title'),
+    Output('download-url', 'data'),
+    Output('download-format', 'value')
 ],[
     Input('ui-state', 'data')
 ], prevent_initial_call=True)
@@ -868,7 +905,7 @@ def make_plots(plot_in_ui_state):
     selection_code = ui_state['platform_code']
 
     if selection_code is None:
-         return [select_graph, 'Select a platform from the map or menu...']
+         return [select_graph, 'Select a platform from the map or menu...', None, None]
 
     plot_df = db.get_data(selection_code)
     subplots = {}
@@ -876,11 +913,13 @@ def make_plots(plot_in_ui_state):
     process_surf = 0
     plot_surf = 0
     plot_df = plot_df.loc[plot_df['platform_code']==selection_code]
+    download_variables = []
     title_platform_type = plot_df['platform_type'].iloc[0]
     for var in constants.surface_variables:
         dfvar = plot_df[['time',var]].copy()
         dfvar.dropna(subset=[var], how='all', inplace=True) # do we want to drop nan or not, may have rows from other parameters that are "false" nan!!!
         if dfvar.shape[0] > 2:
+            download_variables.append(var)
             varplot = go.Scatter(x=dfvar['time'], y=dfvar[var], name=var, mode=marker_menu)
             subplots[var] = varplot
             titles.append(var)
@@ -892,6 +931,7 @@ def make_plots(plot_in_ui_state):
         if var == 'zsal':
             colorscale='Viridis'
         if dfvar.shape[0] > 2:
+            download_variables.append(var)
             depths = pd.unique(dfvar['observation_depth'])
             if var == 'ztmp':
                 xp = .45
@@ -909,7 +949,7 @@ def make_plots(plot_in_ui_state):
 
     num_plots = len(subplots)
     if num_plots == 0:
-        return [no_data_graph, 'No data found for platform ' + str(selection_code)]
+        return [no_data_graph, 'No data found for platform ' + str(selection_code), None, None]
     num_rows = int(num_plots/3)
     if num_rows == 0:
         num_rows = num_rows + 1
@@ -953,7 +993,27 @@ def make_plots(plot_in_ui_state):
     plots.update_layout(height=graph_height, margin=dict( l=80, r=80, b=80, t=80, ))
     plots.update_traces(showlegend=False)
     plots_title = 'Plots for '+ str(title_platform_type) + ': ' + str(selection_code)
-    return [plots, plots_title]
+    download_url = data_url + '.csv?' + 'platform_code,platform_type,latitude,longitude,time,observation_depth,' + ','.join(download_variables) + '&orderBy("time,observation_depth")' + '&platform_code="' + selection_code + '"'
+    return [plots, plots_title, download_url, None]
+
+@app.callback(
+    [
+        Output('download-link', 'href'),
+    ],
+    [
+        Input('download-format', 'value'),
+    ],
+    [     
+        State('download-url', 'data')
+    ], prevent_initial_call=True
+)
+def dowload_data(format_in, url_in):
+    if url_in is None or format_in is None:
+        url_out = None
+    elif url_in is not None and format_in is not None:
+        url_out = url_in.replace('.csv', format_in)
+    return [url_out]
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
