@@ -390,6 +390,7 @@ def read_url(trigger):
                     style={'padding-left': '10px'},
                     options=[
                         {'value': "AUSTRALIA", 'label': 'Australia'},
+                        {'value': "BAHAMAS", 'label': 'Bahamas'},
                         {'value': 'BENIN', 'label': 'Benin'},
                         {'value': "BRAZIL", 'label': 'Brazil'},
                         {'value': 'BULGARIA', 'label': 'Bulgaria'},
