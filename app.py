@@ -250,7 +250,9 @@ app.layout = ddk.App([
                         {'label': 'Markers only', 'value': 'markers'},
                         {'label': 'Lines only', 'value': 'lines'}
                     ],
-                    value='both',   
+                    value='both',
+                    clearable=False,
+                    multi=False
                 ),
                 html.Hr(style={'border': '1px solid black'}),
                 ddk.Row(dcc.Loading(html.A(html.Button(id='download-button', children=['Download'], style={'font-size':'.8em', 'padding-left': '5px'},), target='_blank', id='download-link'))),
@@ -262,7 +264,8 @@ app.layout = ddk.App([
                         {'label': 'netCDF', 'value': '.ncCF'},
                         {'label': 'HTML', 'value': '.htmlTable'}
                     ],
-                    placeholder='Select Download Format',   
+                    placeholder='Select Download Format',
+                    multi=False   
                 )
             ]
         )
@@ -504,7 +507,9 @@ def read_url(trigger):
                         {'label': 'Markers only', 'value': 'markers'},
                         {'label': 'Lines only', 'value': 'lines'}
                     ],
-                    value='both',   
+                    value='both',
+                    clearable=False,
+                    multi=False
                 ),
                 html.Hr(style={'border': '1px solid black'}),
                 ddk.Row(dcc.Loading(html.A(html.Button(id='download-button', children=['Download'], style={'font-size':'.8em', 'padding-left': '5px'},), target='_blank', id='download-link'))),
@@ -516,7 +521,8 @@ def read_url(trigger):
                         {'label': 'netCDF', 'value': '.ncCF'},
                         {'label': 'HTML', 'value': '.htmlTable'}
                     ],
-                    placeholder='Select Download Format',   
+                    placeholder='Select Download Format',
+                    multi=False
                 )
             ]
         )]
@@ -758,7 +764,10 @@ def show_platforms(in_ui_state, map_in_map_info):
     if selection_code is not None:
         data_df = db.get_data(selection_code)
         trace_df = data_df.loc[data_df['platform_code']==selection_code]
-        platform_trace = go.Scattermapbox(lat=trace_df["latitude"], lon=trace_df["longitude"], text=trace_df['trace_text'], mode='markers',
+        platform_trace = go.Scattermapbox(lat=trace_df["latitude"], lon=trace_df["longitude"], 
+                                          hovertext=trace_df['trace_text'],
+                                          hoverlabel = {'namelength': 0,},
+                                          mode='markers',
                                           marker=dict(color=trace_df["millis"], colorscale='Greys', size=13), name=str(selection_code),
                                           uid=9000)       
                                           
@@ -836,6 +845,7 @@ def show_platforms(in_ui_state, map_in_map_info):
         platform_dots = go.Scattermapbox(lat=map_trace_df["latitude"], lon=map_trace_df["longitude"], mode='markers',
                                           marker=dict(color=marker_color, size=10), name=str(category),
                                           hovertext=map_trace_df['trace_text'],
+                                          hoverlabel = {'namelength': 0,},
                                           customdata=map_trace_df['platform_code'], 
                                           uid=icat)
         location_map.add_trace(platform_dots)
