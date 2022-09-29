@@ -48,7 +48,7 @@ def load_observations():
     df.loc[:,'millis'] = pd.to_datetime(df['time']).view(np.int64)
     df.loc[:,'text_time'] = df['time'].astype(str)
     # ['platform_type', 'text_time', 'latitude', 'longitude', 'platform_code', 'country'],
-    df.loc[:,'trace_text'] = df['text_time'] + "<br>" + df['platform_code']
+    df.loc[:,'trace_text'] = df['text_time'] + "<br>" + df['platform_type'] + "<br>" + df['country'] + "<br>" + df['platform_code']
 
     logger.info('Preparing sub-sets for locations and counts.')
     locations_df = df.groupby('platform_code', as_index=False).last()
@@ -90,7 +90,7 @@ def append_new_observations():
     df.reset_index(drop=True, inplace=True)
     df.loc[:,'millis'] = pd.to_datetime(df['time']).view(np.int64)
     df.loc[:,'text_time'] = df['time'].astype(str)
-    df.loc[:,'trace_text'] = df['text_time'] + "<br>" + df['platform_code']
+    df.loc[:,'trace_text'] = df['text_time'] + "<br>" + df['platform_type'] + "<br>" + df['country'] + "<br>" + df['platform_code']
     columns = df.columns
     df = df.assign(source='erddap')
     logger.info('read ' + str(df.shape[0]) + ' potential new observations')
