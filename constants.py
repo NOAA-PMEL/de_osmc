@@ -21,7 +21,6 @@ units = {
     'zsal': 'PSU'
 }
 
-
 all_variables_comma_separated = ','.join(surface_variables) + ',' + ','.join(depth_variables) + ',' + ','.join(meta_variables)
 
 dtypes = {

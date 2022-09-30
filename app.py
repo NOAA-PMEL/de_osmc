@@ -976,6 +976,7 @@ def make_plots(plot_in_ui_state):
             varplot = go.Scatter(x=dfvar['time'], y=dfvar[var], name=var, mode=marker_menu)
             subplots[var] = varplot
             titles.append(var + ' (' + constants.units[var] + ')')
+
     for var in constants.depth_variables:
         dfvar = plot_df[['time', 'observation_depth', var]].copy()  
         dfvar = dfvar.sort_values(["time", "observation_depth"], ascending = (True, True))
