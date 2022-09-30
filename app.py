@@ -26,6 +26,8 @@ app = Dash(
 )
 server = app.server  # expose server variable for Procfile
 
+version = '0.5beta1'
+
 with open('key.txt') as key:
     ESRI_API_KEY = key.readline()
 
@@ -289,6 +291,44 @@ app.layout = ddk.App([
                 fullscreen=True,
             ),
             dcc.Loading(dcc.Graph(id='plots', style={'padding-left': '20px'})),
+        ])
+    ]),
+    ddk.Card(style={'margin-bottom': '10px'}, children=[
+        dbc.Col(width=12, children=[
+            ddk.Block(children=[
+                dbc.Row(children=[
+                    dbc.Col(width=1, children=[
+                        html.Img(src='https://www.pmel.noaa.gov/sites/default/files/PMEL-meatball-logo-sm.png',
+                                    height=100,
+                                    width=100),
+                    ]),
+                    dbc.Col(width=10, children=[
+                        html.Div(children=[
+                            dcc.Link('National Oceanic and Atmospheric Administration',
+                                        href='https://www.noaa.gov/'),
+                        ]),
+                        html.Div(children=[
+                            dcc.Link('Pacific Marine Environmental Laboratory', href='https://www.pmel.noaa.gov/'),
+                        ]),
+                        html.Div(children=[
+                            dcc.Link('oar.pmel.webmaster@noaa.gov', href='mailto:oar.pmel.webmaster@noaa.gov')
+                        ]),
+                        html.Div(children=[
+                            dcc.Link('DOC |', href='https://www.commerce.gov/'),
+                            dcc.Link(' NOAA |', href='https://www.noaa.gov/'),
+                            dcc.Link(' OAR |', href='https://www.research.noaa.gov/'),
+                            dcc.Link(' PMEL |', href='https://www.pmel.noaa.gov/'),
+                            dcc.Link(' Privacy Policy |', href='https://www.noaa.gov/disclaimer'),
+                            dcc.Link(' Disclaimer |', href='https://www.noaa.gov/disclaimer'),
+                            dcc.Link(' Accessibility', href='https://www.pmel.noaa.gov/accessibility')
+                        ])
+                    ]),
+                    dbc.Col(width=1, children=[
+                        html.Div(style={'font-size': '1.1rem', 'position': 'absolute', 'bottom': '0'},
+                                    children=[version])
+                    ])
+                ])
+            ])
         ])
     ]),
 ])
