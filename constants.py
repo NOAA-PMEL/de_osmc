@@ -9,6 +9,18 @@ surface_variables = ['sst','atmp','slp','windspd','winddir','clouds','dewpoint',
 unused_variables = ['uo','vo','wo','waterlevel','rainfall_rate','hur','sea_water_elec_conductivity','sea_water_pressure','rlds','rsds','waterlevel_met_res','waterlevel_wrt_lcd','water_col_ht','wind_to_direction']
 depth_variables = ['ztmp','zsal']
 
+units = {
+    'sst':'Deg C',
+    'atmp': 'Deg C',
+    'slp': 'hPa',
+    'windspd': 'm/s',
+    'winddir': 'Deg true',
+    'clouds': 'oktas',
+    'dewpoint': 'Deg C',
+    'ztmp': 'Deg C',
+    'zsal': 'PSU'
+}
+
 
 all_variables_comma_separated = ','.join(surface_variables) + ',' + ','.join(depth_variables) + ',' + ','.join(meta_variables)
 
