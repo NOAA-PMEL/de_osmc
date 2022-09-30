@@ -28,9 +28,6 @@ server = app.server  # expose server variable for Procfile
 
 version = '0.5beta1'
 
-with open('key.txt') as key:
-    ESRI_API_KEY = key.readline()
-
 center = {'lon': 0.0, 'lat': 0.0}
 zoom = 1.4
 
@@ -902,7 +899,7 @@ def show_platforms(in_ui_state, map_in_map_info):
                 "sourcetype": "raster",
                 "sourceattribution": "Powered by Esri",
                 "source": [
-                    "https://ibasemaps-api.arcgis.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}?token=" + ESRI_API_KEY
+                    "https://ibasemaps-api.arcgis.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}?token=" + constants.ESRI_API_KEY
                 ]
             }
         ],
