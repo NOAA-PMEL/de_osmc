@@ -64,7 +64,8 @@ platform_color = {
     'SHORE AND BOTTOM STATIONS': cc_color_set(10, cc.glasbey_bw_minc_20),
     'TIDE GAUGE STATIONS': cc_color_set(11, cc.glasbey_bw_minc_20),
     'TROPICAL MOORED BUOYS': cc_color_set(12, cc.glasbey_bw_minc_20),
-    'TSUNAMI WARNING STATIONS': cc_color_set(13, cc.glasbey_bw_minc_20),
+    # 'TSUNAMI WARNING STATIONS': cc_color_set(13, cc.glasbey_bw_minc_20),  We aren't processing the data for these into the local DB.
+    # Could be added if desired.
     'UNKNOWN': cc_color_set(14, cc.glasbey_bw_minc_20),
     'UNCREWED SURFACE VEHICLE': cc_color_set(15, cc.glasbey_bw_minc_20),
     'VOLUNTEER OBSERVING SHIPS': cc_color_set(16, cc.glasbey_bw_minc_20),
