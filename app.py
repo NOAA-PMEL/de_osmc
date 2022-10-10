@@ -963,6 +963,7 @@ def make_plots(plot_in_ui_state):
     plot_df = db.get_data(selection_code)
     subplots = {}
     titles = []
+    y_title = {}
     process_surf = 0
     plot_surf = 0
     plot_df = plot_df.loc[plot_df['platform_code']==selection_code]
@@ -976,6 +977,7 @@ def make_plots(plot_in_ui_state):
             varplot = go.Scatter(x=dfvar['time'], y=dfvar[var], name=var, mode=marker_menu)
             subplots[var] = varplot
             titles.append(var + ' (' + constants.units[var] + ')')
+            y_title[var] = var + ' (' + constants.units[var] + ')'
 
     for var in constants.depth_variables:
         dfvar = plot_df[['time', 'observation_depth', var]].copy()  
@@ -996,9 +998,11 @@ def make_plots(plot_in_ui_state):
                                      marker=dict(symbol='square', showscale=True, color=dfvar[var], colorscale=colorscale,),
                                      mode='markers', name=var, text=dfvar[var])
                 titles.append(var + ' (' + constants.units[var] + ')')
+                y_title[var] = 'depth (m)'
             else:
                 varplot = go.Scattergl(x=dfvar['time'], y=dfvar[var], name=var, mode=marker_menu, marker=dict(showscale=False))
                 titles.append(var +  ' (' + constants.units[var] + ')' + ' at depth ' + str(depths[0]))
+                y_title[var] = var +  ' (' + constants.units[var] + ')'
             subplots[var] = varplot
 
     num_plots = len(subplots)
@@ -1035,7 +1039,7 @@ def make_plots(plot_in_ui_state):
             plots['layout'][yax]['autorange'] = "reversed"
         plots.add_trace(current_plot, row=row, col=col)
         plots.update_xaxes(title_text='Time', showticklabels=True, row=row, col=col)
-        plots.update_yaxes(title_text='depth (m)', showticklabels=True, row=row, col=col)
+        plots.update_yaxes(title_text=y_title[plot], showticklabels=True, row=row, col=col)
         plot_index = plot_index + 1
         if plot_index > 1:
             if col == 3:
