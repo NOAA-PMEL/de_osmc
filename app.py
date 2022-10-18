@@ -22,7 +22,8 @@ data_url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60'
 
 app = Dash(
     __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP]
+    external_stylesheets=[dbc.themes.BOOTSTRAP],
+    title='OSMC'
 )
 server = app.server  # expose server variable for Procfile
 
