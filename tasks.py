@@ -12,6 +12,8 @@ from random import randrange
 
 import constants
 import db
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = get_task_logger(__name__)
 
@@ -19,6 +21,11 @@ celery_app = Celery('tasks', broker=os.environ.get("REDIS_URL", "redis://127.0.0
 
 @celery_app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
+    sender.add_periodic_task(
+         crontab(minute='45'),
+         load_observations.s(),
+         name='Initial Load of Observations'
+    )
     sender.add_periodic_task(
          crontab(minute='45'),
          append_new_observations.s(),
@@ -30,43 +37,47 @@ def setup_periodic_tasks(sender, **kwargs):
          name='Delete observations older than 45 days'
     )
 
-
 @celery_app.task
-def load_observations():
-    #url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated + '&time>=2022-08-01T00:00:00Z'
-    #url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated
-    url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated + '&time>=now-45days'
+def load_observations(force=False):
+    if not db.exists() or force:
+        #url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated + '&time>=2022-08-01T00:00:00Z'
+        #url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated
+#        url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated + '&time>=now-45days'
+        url = 'http://dunkel.pmel.noaa.gov:8336/erddap/tabledap/osmc_rt60.csv?' + constants.all_variables_comma_separated + '&time>=now-45days'
+        # 'http://osmc.noaa.gov/erddap/tabledap/OSMC_30day'
 
-    logger.info('Reading data from ' + url)
+        logger.info('Reading data from ' + url)
 
-    df = pd.read_csv(url, skiprows=[1], dtype=constants.dtypes, parse_dates=True)
+        df = pd.read_csv(url, skiprows=[1], dtype=constants.dtypes, parse_dates=True)
 
-    df = df.dropna(subset=['latitude','longitude'], how='any')
-    df = df.query('-90.0 <= latitude <= 90')
-    df = df.sort_values('time')
-    df.reset_index(drop=True, inplace=True)
-    df.loc[:,'millis'] = pd.to_datetime(df['time']).view(np.int64)
-    df.loc[:,'text_time'] = df['time'].astype(str)
-    # ['platform_type', 'text_time', 'latitude', 'longitude', 'platform_code', 'country'],
-    df.loc[:,'trace_text'] = df['text_time'] + "<br>" + df['platform_type'] + "<br>" + df['country'] + "<br>" + df['platform_code']
+        df = df.dropna(subset=['latitude','longitude'], how='any')
+        df = df.query('-90.0 <= latitude <= 90')
+        df = df.sort_values('time')
+        df.reset_index(drop=True, inplace=True)
+        df.loc[:,'millis'] = pd.to_datetime(df['time']).view(np.int64)
+        df.loc[:,'text_time'] = df['time'].astype(str)
+        # ['platform_type', 'text_time', 'latitude', 'longitude', 'platform_code', 'country'],
+        df.loc[:,'trace_text'] = df['text_time'] + "<br>" + df['platform_type'] + "<br>" + df['country'] + "<br>" + df['platform_code']
 
-    logger.info('Preparing sub-sets for locations and counts.')
-    locations_df = df.groupby('platform_code', as_index=False).last()
+        logger.info('Preparing sub-sets for locations and counts.')
+        locations_df = df.groupby('platform_code', as_index=False).last()
 
-    counts_df = df.groupby('platform_code').count()
-    counts_df.reset_index(inplace=True)
+        counts_df = df.groupby('platform_code').count()
+        counts_df.reset_index(inplace=True)
 
-    logger.info('Found ' + str(df.shape[0]) + ' observations to store.')
+        logger.info('Found ' + str(df.shape[0]) + ' observations to store.')
 
-    # In the following command, we are saving the updated new data to the dataset_table using pandas
-    # and the SQLAlchemy engine we created above. When if_exists='append' we add the rows to our table
-    # and when if_exists='replace', a new table overwrites the old one.
-    logger.info('Updating data...')
-    df.to_sql(constants.data_table, constants.postgres_engine, if_exists='replace', index=False, chunksize=1500, method='multi')
-    logger.info('Updating counts...')
-    counts_df.to_sql(constants.counts_table, constants.postgres_engine, if_exists='replace', index=False)
-    logger.info('Updating locations...')
-    locations_df.to_sql(constants.locations_table, constants.postgres_engine, if_exists='replace', index=False)
+        # In the following command, we are saving the updated new data to the dataset_table using pandas
+        # and the SQLAlchemy engine we created above. When if_exists='append' we add the rows to our table
+        # and when if_exists='replace', a new table overwrites the old one.
+        logger.info('Updating data...')
+        df.to_sql(constants.data_table, constants.postgres_engine, if_exists='replace', index=False, chunksize=1500, method='multi')
+        logger.info('Updating counts...')
+        counts_df.to_sql(constants.counts_table, constants.postgres_engine, if_exists='replace', index=False)
+        logger.info('Updating locations...')
+        locations_df.to_sql(constants.locations_table, constants.postgres_engine, if_exists='replace', index=False)
+    else:
+        logger.info('Database already exists. Updates will come from periodic tasks.')
 
 
 @celery_app.task
@@ -78,8 +89,9 @@ def trim_database():
 def append_new_observations():
     #url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated + '&time>=2022-08-01T00:00:00Z'
     #url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated
-    url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated + '&time>=now-14days'
-
+    # url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated + '&time>=now-14days'
+    # url = 'https://dunkel.pmel.noaa.gov:8930/erddap/tabledap/OSMC_30day_mirror.csv?' + constants.all_variables_comma_separated + '&time>=now-45days'
+    url = 'http://dunkel.pmel.noaa.gov:8336/erddap/tabledap/osmc_rt60.csv?' + constants.all_variables_comma_separated + '&time>=now-45days'
     logger.info('Reading data from ' + url)
 
     df = pd.read_csv(url, skiprows=[1], dtype=constants.dtypes, parse_dates=True)

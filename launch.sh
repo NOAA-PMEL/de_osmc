@@ -1,2 +1,2 @@
 #!/bin/sh
-gunicorn "app:server" --timeout 60 --workers 4
+gunicorn "app:server" --timeout 90 --workers 4

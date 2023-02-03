@@ -4,6 +4,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import dash_bootstrap_components as dbc
+import dash_mantine_components as dmc
+from dash_iconify import DashIconify
 import flask
 import urllib
 import pandas as pd
@@ -12,21 +14,24 @@ import zc
 import constants
 import db
 import colorcet as cc
+from urllib.request import urlopen
 
 import json
 # import ssl
 # ssl._create_default_https_context = ssl._create_unverified_context
 
 cones_url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_cones.csv?latitude,longitude,name,index,time&orderBy("name,index")'
-data_url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60'
+# data_url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60'
+data_url = 'http://dunkel.pmel.noaa.gov:8336/erddap/tabledap/osmc_rt60'
 
 app = Dash(
     __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP]
+    external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
+    title='OSMC'
 )
 server = app.server  # expose server variable for Procfile
 
-version = '0.5beta1'
+version = '0.7'
 
 center = {'lon': 0.0, 'lat': 0.0}
 zoom = 1.4
@@ -49,7 +54,7 @@ def cc_color_set_transparent(index, palette, alpha):
 
 platform_color = {
     'ARGO' : cc_color_set(0, cc.glasbey_bw_minc_20),
-    'AUTONOMOUS PINNIPEDS': cc_color_set(1, cc.glasbey_bw_minc_20),
+    'TAGGED ANIMAL': cc_color_set(1, cc.glasbey_bw_minc_20),
     'C-MAN WEATHER STATIONS': cc_color_set(2, cc.glasbey_bw_minc_20), 
     'CLIMATE REFERENCE MOORED BUOYS': cc_color_set(3, cc.glasbey_bw_minc_20), 
     'DRIFTING BUOYS': cc_color_set(4, cc.glasbey_bw_minc_20), 
@@ -287,6 +292,22 @@ app.layout = ddk.App([
                 modal=True, 
                 modal_config={'height': 90, 'width': 95}, 
                 fullscreen=True,
+                children=[
+                    html.Button(id='info-action', children=[html.Span([
+                        html.I(id='info-icon', className="bi bi-info-circle", ),
+                        '  Platform Information'
+                    ])]),
+                ]
+            ),
+            dmc.Alert(children=
+                [
+                    dcc.Loading(html.Div(id='info-body', children=[html.H1('.'),html.H2('.')])),
+                ],
+                title='Fecthing additional information',
+                id='info-popover',
+                withCloseButton=True,
+                hide=True,
+                color='gray'
             ),
             dcc.Loading(dcc.Graph(id='plots', style={'padding-left': '20px'})),
         ])
@@ -331,6 +352,59 @@ app.layout = ddk.App([
     ]),
 ])
 
+@app.callback(
+    Output("info-popover", "hide"),
+    Input("info-action", "n_clicks"),
+    State("info-popover", "hide"),
+    prevent_initial_call=True,
+)
+def alert(n_clicks, hide):
+    return False
+
+@app.callback(
+    Output('info-body', 'children'),
+    Output('info-popover', 'title'),
+    Input('info-action', 'n_clicks'),
+    Input('ui-state', 'data'),
+    State('info-popover', 'hide'),
+    prevent_initial_call=True
+)
+def fetch_info(click, in_info_ui_state, in_hide):
+    tid = ctx.triggered_id
+    if in_info_ui_state is not None and (tid == 'info-action' or in_hide == False):
+        info_ui_state = json.loads(in_info_ui_state)
+        if info_ui_state['platform_code'] is None:
+            return html.Div(html.H5('No platform selected.')), 'You must select a platform'
+        else:
+            if info_ui_state['platform_code'] is not None:
+                url = 'https://data.pmel.noaa.gov/generic/erddap/tabledap/wmo_list.csv?&WMO="' + info_ui_state['platform_code'] + '"'
+                try:
+                    extra_info = pd.read_csv(url, skiprows=[1])
+                    info_merge = {}
+                    for index, row in extra_info.iterrows():
+                        for column in extra_info.columns:
+                            if column != 'WMO':
+                                value = str(row[column])
+                                if column in info_merge:
+                                    old_value = info_merge[column]
+                                    if old_value != value and value != 'nan':
+                                        old_value = value + ' ' +old_value
+                                        info_merge[column] = old_value
+                                else:
+                                    if value != 'nan':
+                                        info_merge[column] = value
+                    info_children = []
+                    for column in info_merge:
+                        drow = column + ' : ' + info_merge[column]
+                        info_children.append(html.Li(drow))
+                    return html.Ul(children=info_children), 'Platform Metadata for ' + str(info_ui_state['platform_code'])
+                except Exception as e:
+                    print(e)
+                    return html.Div(children=[html.H5('No metadata found...'),]),'No extra information found for: ' + info_ui_state['platform_code']
+            else:
+                  return html.Div(html.H5('No platform selected.')), 'You must select a platform'
+    else:
+        raise exceptions.PreventUpdate     
 
 ##
 # This runs on-load and builds the control and sets the options and values of the controls based on the state of the URL
@@ -496,7 +570,6 @@ def read_url(trigger):
                     value=out_platform_type,
                     options=[
                         {'label': 'ARGO', 'value': 'ARGO'},
-                        {'label': 'AUTONOMOUS PINNIPEDS', 'value': 'AUTONOMOUS PINNIPEDS'},
                         {'label': 'C-MAN WEATHER STATIONS', 'value': 'C-MAN WEATHER STATIONS'},
                         {'label': 'CLIMATE REFERENCE MOORED BUOYS', 'value': 'CLIMATE REFERENCE MOORED BUOYS'},
                         {'label': 'DRIFTING BUOYS', 'value': 'DRIFTING BUOYS'},
@@ -506,6 +579,7 @@ def read_url(trigger):
                         {'label': 'RESEARCH', 'value': 'RESEARCH'},
                         {'label': 'SHIPS', 'value': 'SHIPS'},
                         {'label': 'SHORE AND BOTTOM STATIONS', 'value': 'SHORE AND BOTTOM STATIONS'},
+                        {'label': 'TAGGED ANIMAL', 'value': 'TAGGED ANIMAL'},
                         {'label': 'TIDE GAUGE STATIONS', 'value': 'TIDE GAUGE STATIONS'},
                         {'label': 'TROPICAL MOORED BUOYS', 'value': 'TROPICAL MOORED BUOYS'},
                         {'label': 'TSUNAMI WARNING STATIONS', 'value': 'TSUNAMI WARNING STATIONS'},
@@ -673,12 +747,10 @@ def set_platform_code_from_map(state_in_click):
         Input('color-by', 'value'),
         Input('platform-code', 'value'),
         Input('markers', 'value'),
-    ],
-    [
-        State('map-info', 'data')
+        # Input('map-info', 'data')
     ], prevent_initial_call=True
-)
-def set_ui_state(state_in_variable, state_in_platform_type, state_in_country, state_in_color_by, state_in_pcode, state_in_markers, state_in_map_info):
+)                                                                                                                                # , state_in_map_info
+def set_ui_state(state_in_variable, state_in_platform_type, state_in_country, state_in_color_by, state_in_pcode, state_in_markers):
     trigger_id = ctx.triggered_id
     ui_state_out = {}
     query = '?'
@@ -742,10 +814,10 @@ def set_ui_state(state_in_variable, state_in_platform_type, state_in_country, st
         out_markers = state_in_markers
     ui_state_out['markers'] = out_markers
 
-    if state_in_map_info is not None:
-        query_map_info = json.loads(state_in_map_info)
-        location_center = query_map_info['center']
-        location_zoom = query_map_info['zoom']
+    # if state_in_map_info is not None:
+    #     query_map_info = json.loads(state_in_map_info)
+    #     location_center = query_map_info['center']
+    #     location_zoom = query_map_info['zoom']
         # query = query + '&lat=' + str(location_center['lat']) + '&lon=' + str(location_center['lon']) + '&zoom='+str(location_zoom)
 
     return [json.dumps(ui_state_out), query]
@@ -758,10 +830,9 @@ def set_ui_state(state_in_variable, state_in_platform_type, state_in_country, st
     ],
     [
         Input('ui-state', 'data'),
+        Input('map-info', 'data')
     ],
-    [
-        State('map-info', 'data')
-    ], prevent_initial_call=True
+     prevent_initial_call=True
 )
 def show_platforms(in_ui_state, map_in_map_info):
     
@@ -782,6 +853,16 @@ def show_platforms(in_ui_state, map_in_map_info):
         map_map_info = json.loads(map_in_map_info)
         location_center = map_map_info['center']
         location_zoom = map_map_info['zoom']
+    
+    if location_zoom < 2.5:
+        marker_size = 8
+        trace_size = 10
+    elif 2.5 <= location_zoom < 3.5:
+        marker_size = 10
+        trace_size = 12
+    else:
+        marker_size = 12
+        trace_size = 13
 
     map_df = db.get_locations()
     counts_df = db.get_counts()
@@ -799,6 +880,7 @@ def show_platforms(in_ui_state, map_in_map_info):
     selection_code = None
 
     selection_code = map_ui_state['platform_code']
+
     if selection_code is not None:
         data_df = db.get_data(selection_code)
         trace_df = data_df.loc[data_df['platform_code']==selection_code]
@@ -806,7 +888,7 @@ def show_platforms(in_ui_state, map_in_map_info):
                                           hovertext=trace_df['trace_text'],
                                           hoverlabel = {'namelength': 0,},
                                           mode='markers',
-                                          marker=dict(color=trace_df["millis"], colorscale='Greys', size=13), name=str(selection_code),
+                                          marker=dict(color=trace_df["millis"], colorscale='Greys', size=trace_size), name=str(selection_code),
                                           uid=9000)       
                                           
 
@@ -881,7 +963,7 @@ def show_platforms(in_ui_state, map_in_map_info):
         else:
             marker_color = '#FF5F1F'
         platform_dots = go.Scattermapbox(lat=map_trace_df["latitude"], lon=map_trace_df["longitude"], mode='markers',
-                                          marker=dict(color=marker_color, size=10), name=str(category),
+                                          marker=dict(color=marker_color, size=marker_size), name=str(category),
                                           hovertext=map_trace_df['trace_text'],
                                           hoverlabel = {'namelength': 0,},
                                           customdata=map_trace_df['platform_code'], 

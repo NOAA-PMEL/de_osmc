@@ -10,6 +10,14 @@ def trim(days_ago):
     print(delete)
     constants.postgres_engine.execute(delete.format(constants.data_table))
 
+def delete_all():
+    n = datetime.datetime.now()
+    delete = 'DELETE FROM {};'
+    print(delete.format(constants.data_table))
+    constants.postgres_engine.execute(delete.format(constants.data_table))
+    constants.postgres_engine.execute(delete.format(constants.counts_table))
+    constants.postgres_engine.execute(delete.format(constants.locations_table))
+
 
 def get_between_days_ago(ago1, ago2):
     if ago1 == ago2:
@@ -42,6 +50,27 @@ def get_data(platform):
         selection.format(constants.data_table), constants.postgres_engine
     )
     return updated_df
+
+def test_selection():
+    selection = 'SELECT * from {}'
+    selection = selection + ' WHERE PLATFORM_TYPE=\'ARGO\''
+    selection = selection + ' ORDER BY TIME LIMIT 10;'
+    updated_df = pd.read_sql(
+        selection.format(constants.data_table), constants.postgres_engine
+    )
+    return updated_df
+
+def exists():
+    try:
+        df = test_selection()
+    except Exception as e:
+        print(e)
+        return False
+
+    if df is not None:
+        return True
+    else:
+        return False
 
 
 def get_counts():
