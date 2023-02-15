@@ -1034,7 +1034,7 @@ def make_plots(plot_in_ui_state):
     
     marker_menu = ui_state['markers']
     if marker_menu is None:
-        marker_menu = 'lines+markers'
+        marker_menu = 'lines'
     elif marker_menu == 'both':
         marker_menu = 'lines+markers'
 
