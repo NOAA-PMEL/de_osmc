@@ -377,8 +377,7 @@ def fetch_info(click, in_info_ui_state, in_hide):
             return html.Div(html.H5('No platform selected.')), 'You must select a platform'
         else:
             if info_ui_state['platform_code'] is not None:
-                url = 'https://data.pmel.noaa.gov/generic/erddap/tabledap/wmo_list.csv?&WMO="' + info_ui_state['platform_code'] + '"'
-                print(url)
+                url = 'https://data.pmel.noaa.gov/generic/erddap/tabledap/wmo_list.csv?&WMO="' + info_ui_state['platform_code'] + '"&orderByMax("time")'
                 try:
                     extra_info = pd.read_csv(url, skiprows=[1])
                     info_merge = {}
@@ -386,14 +385,8 @@ def fetch_info(click, in_info_ui_state, in_hide):
                         for column in extra_info.columns:
                             if column != 'WMO':
                                 value = str(row[column])
-                                if column in info_merge:
-                                    old_value = info_merge[column]
-                                    if old_value != value and value != 'nan':
-                                        old_value = value + ' ' +old_value
-                                        info_merge[column] = old_value
-                                else:
-                                    if value != 'nan':
-                                        info_merge[column] = value
+                                if value != 'nan':
+                                    info_merge[column] = value
                     info_children = []
                     for column in info_merge:
                         drow = column + ' : ' + info_merge[column]
