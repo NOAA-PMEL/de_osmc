@@ -31,7 +31,7 @@ app = Dash(
 )
 server = app.server  # expose server variable for Procfile
 
-version = '0.7'
+version = '1.0'
 
 center = {'lon': 0.0, 'lat': 0.0}
 zoom = 1.4
@@ -255,7 +255,7 @@ app.layout = ddk.App([
                         {'label': 'Markers only', 'value': 'markers'},
                         {'label': 'Lines only', 'value': 'lines'}
                     ],
-                    value='both',
+                    value='lines',
                     clearable=False,
                     multi=False
                 ),
@@ -378,6 +378,7 @@ def fetch_info(click, in_info_ui_state, in_hide):
         else:
             if info_ui_state['platform_code'] is not None:
                 url = 'https://data.pmel.noaa.gov/generic/erddap/tabledap/wmo_list.csv?&WMO="' + info_ui_state['platform_code'] + '"'
+                print(url)
                 try:
                     extra_info = pd.read_csv(url, skiprows=[1])
                     info_merge = {}
@@ -619,7 +620,7 @@ def read_url(trigger):
                         {'label': 'Markers only', 'value': 'markers'},
                         {'label': 'Lines only', 'value': 'lines'}
                     ],
-                    value='both',
+                    value='lines',
                     clearable=False,
                     multi=False
                 ),
