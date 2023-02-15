@@ -418,7 +418,7 @@ def fetch_info(click, in_info_ui_state, in_hide):
 )
 def read_url(trigger):
     out_platform_code = None
-    out_line_marker_setting = 'both'
+    out_line_marker_setting = 'lines'
     out_platform_type = None
     out_color_by = 'platform_type'
     out_variable = None
