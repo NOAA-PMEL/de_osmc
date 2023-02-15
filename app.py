@@ -810,7 +810,7 @@ def set_ui_state(state_in_variable, state_in_platform_type, state_in_country, st
         query = query + 'platform_code=' + out_platform_code
     ui_state_out['platform_code'] = out_platform_code
 
-    out_markers = 'both'
+    out_markers = 'lines'
     if state_in_markers is not None:
         out_markers = state_in_markers
     ui_state_out['markers'] = out_markers
