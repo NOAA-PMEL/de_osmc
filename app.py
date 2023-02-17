@@ -287,27 +287,31 @@ app.layout = ddk.App([
     ]),
     ddk.Block(width=100, children=[
         ddk.Card(width=100, children=[
-            ddk.CardHeader(id='plots-header', 
-                title='Plots...',
-                modal=True, 
-                modal_config={'height': 90, 'width': 95}, 
-                fullscreen=True,
-                children=[
-                    html.Button(id='info-action', children=[html.Span([
-                        html.I(id='info-icon', className="bi bi-info-circle", ),
-                        '  Platform Information'
-                    ])]),
-                ]
+            dcc.Loading(
+                ddk.CardHeader(id='plots-header', 
+                    title='Plots...',
+                    modal=True, 
+                    modal_config={'height': 90, 'width': 95}, 
+                    fullscreen=True,
+                    children=[
+                        html.Button(id='info-action', children=[html.Span([
+                            html.I(id='info-icon', className="bi bi-info-circle", ),
+                            '  Platform Information'
+                        ])]),
+                    ]
+                )
             ),
-            dmc.Alert(children=
-                [
-                    dcc.Loading(html.Div(id='info-body', children=[html.H1('.'),html.H2('.')])),
-                ],
-                title='Fecthing additional information',
-                id='info-popover',
-                withCloseButton=True,
-                hide=True,
-                color='gray'
+            dcc.Loading(
+                dmc.Alert(children=
+                    [
+                        html.Div(id='info-body', children=[html.H1('.'),html.H2('.')]),
+                    ],
+                    title='Fecthing additional information',
+                    id='info-popover',
+                    withCloseButton=True,
+                    hide=True,
+                    color='gray'
+                ),
             ),
             dcc.Loading(dcc.Graph(id='plots', style={'padding-left': '20px'})),
         ])
@@ -359,7 +363,7 @@ app.layout = ddk.App([
     prevent_initial_call=True,
 )
 def alert(n_clicks, hide):
-    return False
+    return not hide
 
 @app.callback(
     Output('info-body', 'children'),
@@ -380,18 +384,15 @@ def fetch_info(click, in_info_ui_state, in_hide):
                 url = 'https://data.pmel.noaa.gov/generic/erddap/tabledap/wmo_list.csv?&WMO="' + info_ui_state['platform_code'] + '"&orderByMax("time")'
                 try:
                     extra_info = pd.read_csv(url, skiprows=[1])
-                    info_merge = {}
+                    # Make a table. Include only columns which have data (!='nan')
+                    datatable_columns = []
                     for index, row in extra_info.iterrows():
                         for column in extra_info.columns:
                             if column != 'WMO':
                                 value = str(row[column])
                                 if value != 'nan':
-                                    info_merge[column] = value
-                    info_children = []
-                    for column in info_merge:
-                        drow = column + ' : ' + info_merge[column]
-                        info_children.append(html.Li(drow))
-                    return html.Ul(children=info_children), 'Platform Metadata for ' + str(info_ui_state['platform_code'])
+                                    datatable_columns.append({'name': column, 'id': column})
+                    return html.Div(ddk.DataTable(columns=datatable_columns, data=extra_info.to_dict('records'), editable=False)), 'Platform Metadata for ' + str(info_ui_state['platform_code'])
                 except Exception as e:
                     print(e)
                     return html.Div(children=[html.H5('No metadata found...'),]),'No extra information found for: ' + info_ui_state['platform_code']
