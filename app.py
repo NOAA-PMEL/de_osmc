@@ -21,8 +21,8 @@ import json
 # ssl._create_default_https_context = ssl._create_unverified_context
 
 cones_url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_cones.csv?latitude,longitude,name,index,time&orderBy("name,index")'
-# data_url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60'
-data_url = 'http://dunkel.pmel.noaa.gov:8336/erddap/tabledap/osmc_rt60'
+data_url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60'
+# data_url = 'http://dunkel.pmel.noaa.gov:8336/erddap/tabledap/osmc_rt60'
 
 app = Dash(
     __name__,
