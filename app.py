@@ -697,21 +697,21 @@ def set_platform_list(list_variable_in, list_platform_type_in, list_country_in):
 
 
 
-@app.callback([
-    Output('map-info', 'data')
-],[
-    Input('location-map', 'relayoutData')
-])
-def record_map_change(relay_data):
-    center = {'lon': 0.0, 'lat': 0.0}
-    zoom = 1.4
-    if relay_data is not None:
-        if 'mapbox.center' in relay_data:
-            center = relay_data['mapbox.center']
-        if 'mapbox.zoom' in relay_data:
-            zoom = relay_data['mapbox.zoom']
-    map_info = {'center': center, 'zoom': zoom}
-    return [json.dumps(map_info)]
+# @app.callback([
+#     Output('map-info', 'data')
+# ],[
+#     Input('location-map', 'relayoutData')
+# ])
+# def record_map_change(relay_data):
+#     center = {'lon': 0.0, 'lat': 0.0}
+#     zoom = 1.4
+#     if relay_data is not None:
+#         if 'mapbox.center' in relay_data:
+#             center = relay_data['mapbox.center']
+#         if 'mapbox.zoom' in relay_data:
+#             zoom = relay_data['mapbox.zoom']
+#     map_info = {'center': center, 'zoom': zoom}
+#     return [json.dumps(map_info)]
 
 
 @app.callback(
@@ -849,15 +849,18 @@ def show_platforms(in_ui_state, map_in_map_info):
         location_center = map_map_info['center']
         location_zoom = map_map_info['zoom']
     
-    if location_zoom < 2.5:
-        marker_size = 8
-        trace_size = 10
-    elif 2.5 <= location_zoom < 3.5:
-        marker_size = 10
-        trace_size = 12
-    else:
-        marker_size = 12
-        trace_size = 13
+    # if location_zoom < 2.5:
+    #     marker_size = 8
+    #     trace_size = 10
+    # elif 2.5 <= location_zoom < 3.5:
+    #     marker_size = 10
+    #     trace_size = 12
+    # else:
+    #     marker_size = 12
+    #     trace_size = 13
+
+    marker_size = 9
+    trace_size = 12
 
     map_df = db.get_locations()
     counts_df = db.get_counts()
@@ -990,6 +993,7 @@ def show_platforms(in_ui_state, map_in_map_info):
         modebar_orientation='v',
     )
 
+    # location_map.update_traces(cluster={'enabled': True, 'maxzoom': 2, 'color': '#444455'})
     cone_colors = px.colors.qualitative.Light24
 
     if cones_df is not None and cones_df.shape[0] > 1:
