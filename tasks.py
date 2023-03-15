@@ -82,11 +82,8 @@ def trim_database():
 
 @celery_app.task
 def append_new_observations():
-    #url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated + '&time>=2022-08-01T00:00:00Z'
-    #url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated
-    # url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated + '&time>=now-14days'
-    # url = 'https://dunkel.pmel.noaa.gov:8930/erddap/tabledap/OSMC_30day_mirror.csv?' + constants.all_variables_comma_separated + '&time>=now-45days'
-    url = 'http://dunkel.pmel.noaa.gov:8336/erddap/tabledap/osmc_rt60.csv?' + constants.all_variables_comma_separated + '&time>=now-45days'
+    
+    url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated + '&time>=now-14days'
     logger.info('Reading data from ' + url)
 
     df = pd.read_csv(url, skiprows=[1], dtype=constants.dtypes, parse_dates=True)
