@@ -52,6 +52,8 @@ def cc_color_set_transparent(index, palette, alpha):
     return color
     
 
+marker_size = 9
+trace_size = 12
 platform_color = {
     'ARGO' : cc_color_set(0, cc.glasbey_bw_minc_20),
     'TAGGED ANIMAL': cc_color_set(1, cc.glasbey_bw_minc_20),
@@ -696,24 +698,6 @@ def set_platform_list(list_variable_in, list_platform_type_in, list_country_in):
     return [platform_code_options]
 
 
-
-# @app.callback([
-#     Output('map-info', 'data')
-# ],[
-#     Input('location-map', 'relayoutData')
-# ])
-# def record_map_change(relay_data):
-#     center = {'lon': 0.0, 'lat': 0.0}
-#     zoom = 1.4
-#     if relay_data is not None:
-#         if 'mapbox.center' in relay_data:
-#             center = relay_data['mapbox.center']
-#         if 'mapbox.zoom' in relay_data:
-#             zoom = relay_data['mapbox.zoom']
-#     map_info = {'center': center, 'zoom': zoom}
-#     return [json.dumps(map_info)]
-
-
 @app.callback(
     [
         Output('platform-code', 'value')
@@ -825,11 +809,10 @@ def set_ui_state(state_in_variable, state_in_platform_type, state_in_country, st
     ],
     [
         Input('ui-state', 'data'),
-        Input('map-info', 'data')
     ],
      prevent_initial_call=True
 )
-def show_platforms(in_ui_state, map_in_map_info):
+def show_platforms(in_ui_state):
     
     cones_df = None
     try:
@@ -844,23 +827,6 @@ def show_platforms(in_ui_state, map_in_map_info):
 
     location_center = center
     location_zoom = zoom
-    if map_in_map_info is not None:
-        map_map_info = json.loads(map_in_map_info)
-        location_center = map_map_info['center']
-        location_zoom = map_map_info['zoom']
-    
-    # if location_zoom < 2.5:
-    #     marker_size = 8
-    #     trace_size = 10
-    # elif 2.5 <= location_zoom < 3.5:
-    #     marker_size = 10
-    #     trace_size = 12
-    # else:
-    #     marker_size = 12
-    #     trace_size = 13
-
-    marker_size = 9
-    trace_size = 12
 
     map_df = db.get_locations()
     counts_df = db.get_counts()
@@ -942,15 +908,7 @@ def show_platforms(in_ui_state, map_in_map_info):
 
     platform_count = map_df.shape[0]
     title = 'Platform Locations - ' + str(platform_count) + ' platforms reported.'
-    # In order to keep track of the traces that are selected and unselected, each trace has to have a unique ID.
-    # The only way I've figured out how to do that is to make each trace for each category individually.  
-    # The loop below replaces the px.scatter_mapbox call
-    # location_map = px.scatter_mapbox(map_df, lat='latitude', lon='longitude',  
-    #                                  color=color_by,
-    #                                  color_discrete_map=color_map,
-    #                                  hover_data=['platform_type', 'text_time', 'latitude', 'longitude', 'platform_code', 'country'],
-    #                                  custom_data=['platform_code','platform_type'], 
-    #                                  labels={"platform_type": "Platform Type"})
+
     location_map = go.Figure()
     categories = map_df[color_by].unique().tolist()
     categories.sort()
