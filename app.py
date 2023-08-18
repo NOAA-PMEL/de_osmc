@@ -404,7 +404,7 @@ def fetch_info(click, in_info_ui_state, in_hide):
         raise exceptions.PreventUpdate     
 
 ##
-# This runs on-load and builds the control and sets the options and values of the controls based on the state of the URL
+# This runs on-load and builds the control and sets the options and values of the controls based on the state of the URL.
 @app.callback([
     Output('control-block', 'children'),
     Output('markers', 'value'),
