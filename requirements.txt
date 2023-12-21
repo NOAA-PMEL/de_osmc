@@ -11,3 +11,4 @@ pg8000==1.16.5
 celery==5.0.6
 colorcet==3.0.0
 dash-iconify
+importlib-metadata==4.13.0
