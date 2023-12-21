@@ -5,8 +5,8 @@ from sqlalchemy.pool import NullPool
 import os
 
 meta_variables = ['longitude', 'latitude', 'observation_depth', 'time', 'platform_type', 'platform_code', 'country']
-surface_variables = ['sst','atmp','slp','windspd','winddir','clouds','dewpoint',]
-unused_variables = ['uo','vo','wo','waterlevel','rainfall_rate','hur','sea_water_elec_conductivity','sea_water_pressure','rlds','rsds','waterlevel_met_res','waterlevel_wrt_lcd','water_col_ht','wind_to_direction']
+surface_variables = ['sst','atmp','slp','windspd','winddir','clouds','dewpoint', 'hur', 'wvht', 'waterlevel_met_res', 'waterlevel_wrt_lcd', 'water_col_ht',]
+unused_variables = ['uo','vo','wo','waterlevel','rainfall_rate', 'sea_water_elec_conductivity','sea_water_pressure','rlds','rsds','wind_to_direction']
 depth_variables = ['ztmp','zsal']
 
 units = {
@@ -18,7 +18,12 @@ units = {
     'clouds': 'oktas',
     'dewpoint': 'Deg C',
     'ztmp': 'Deg C',
-    'zsal': 'PSU'
+    'zsal': 'PSU',
+    'hur': '%', 
+    'wvht': 'm', 
+    'waterlevel_met_res': 'm', 
+    'waterlevel_wrt_lcd': 'm', 
+    'water_col_ht': 'm',
 }
 
 all_variables_comma_separated = ','.join(surface_variables) + ',' + ','.join(depth_variables) + ',' + ','.join(meta_variables)
@@ -44,7 +49,12 @@ dtypes = {
     'latitude': np.float64,
     'observation_depth': np.float64, 
     'platform_type': str, 
-    'platform_code':str
+    'platform_code':str,
+    'hur': np.float64, 
+    'wvht': np.float64, 
+    'waterlevel_met_res': np.float64, 
+    'waterlevel_wrt_lcd': np.float64, 
+    'water_col_ht': np.float64,
 }
 
 platforms = [
