@@ -1,6 +1,7 @@
 import constants
 import pandas as pd
 import datetime
+from sqlalchemy import MetaData, Table
 
 
 def trim(days_ago):
@@ -17,6 +18,16 @@ def delete_all():
     constants.postgres_engine.execute(delete.format(constants.data_table))
     constants.postgres_engine.execute(delete.format(constants.counts_table))
     constants.postgres_engine.execute(delete.format(constants.locations_table))
+
+
+def drop_all():
+    metadata = MetaData(bind=constants.postgres_engine, reflect=True)
+    d_table = Table(constants.data_table, metadata)
+    d_table.drop(constants.postgres_engine, checkfirst=True)
+    c_table = Table(constants.counts_table, metadata)
+    c_table.drop(constants.postgres_engine, checkfirst=True)
+    l_table = Table(constants.locations_table, metadata)
+    l_table.drop(constants.postgres_engine, checkfirst=True)
 
 
 def get_between_days_ago(ago1, ago2):
