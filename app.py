@@ -836,6 +836,7 @@ def show_platforms(in_ui_state):
     location_zoom = zoom
 
     map_df = db.get_locations()
+    map_df.dropna(subset=['platform_type'], inplace=True)
     counts_df = db.get_counts()
 
     color_by = 'platform_type'
@@ -918,6 +919,7 @@ def show_platforms(in_ui_state):
 
     location_map = go.Figure()
     categories = map_df[color_by].unique().tolist()
+    print(categories)
     categories.sort()
     for icat, category in enumerate(categories):
         map_trace_df = map_df.loc[map_df[color_by] == category]
