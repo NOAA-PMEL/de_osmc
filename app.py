@@ -209,6 +209,13 @@ app.layout = ddk.App([
         ddk.Title('Observing System Monitoring Center'),
         dcc.Loading(html.Div(id='map-loader', style={'float': 'right', 'display': 'none'}))
     ]),
+    ddk.Block(width=.95, children=[
+        html.Div('We are cleaing up and rebuilding the database. We will be back on-line with more platforms and more variables soon...', style={'display':'inline'}), 
+    #     html.A('www.weather.gov', href='https://www.weather.gov', style={'display':'inline'}), 
+    #     html.Div(' for critical weather information. To learn more, see ', style={'display': 'inline'}), 
+    #     html.A('www.commerce.gov', href='https://www.commerce.gov', style={'display':'inline'}), 
+    #     html.Div('.', style={'display':'inline'}),
+    ], style={'margin-left': '40px'}),
     # ddk.Block(width=.95, children=[
     #     html.Div('Parts of the US government are closed. This site will not be updated; however, NOAA websites and social media channels necessary to protect lives and property will be maintained. See ', style={'display':'inline'}), 
     #     html.A('www.weather.gov', href='https://www.weather.gov', style={'display':'inline'}), 
@@ -919,7 +926,6 @@ def show_platforms(in_ui_state):
 
     location_map = go.Figure()
     categories = map_df[color_by].unique().tolist()
-    print(categories)
     categories.sort()
     for icat, category in enumerate(categories):
         map_trace_df = map_df.loc[map_df[color_by] == category]
