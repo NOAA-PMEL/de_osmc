@@ -452,15 +452,16 @@ app.layout = ddk.App([
         size="90%",
         title="Platform Counts",
         id="counts-modal",
-        overflow="inside",
+        overflow="outside",
         zIndex=10000,
         children=[
-            ddk.Card(children=[
+            ddk.Card(style={'height': '80vh'}, children=[
                 ddk.CardHeader('Number of Observations per Variable by Platform Type'),
-                dag.AgGrid(id='nobsByVarAndPlatform', columnDefs=varByPlatform_defs)
+                dag.AgGrid(id='nobsByVarAndPlatform', columnDefs=varByPlatform_defs, style={'height':'75vh'})
             ]),
         ],
     ),
+    dcc.Clipboard()
 ])
 
 
