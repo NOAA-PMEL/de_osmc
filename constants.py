@@ -9,6 +9,23 @@ surface_variables = ['sst','atmp','slp','windspd','winddir','clouds','dewpoint',
 unused_variables = ['uo','vo','wo','waterlevel','rainfall_rate', 'sea_water_elec_conductivity','sea_water_pressure','rlds','rsds','wind_to_direction']
 depth_variables = ['ztmp','zsal']
 
+long_names = {
+    'sst':'Sea Surface Temperature',
+    'atmp': 'Air Temperature',
+    'slp': 'Sea Level Pressure',
+    'windspd': 'Wind Speed',
+    'winddir': 'Wind Direction',
+    'clouds': 'Clouds',
+    'dewpoint': "Dew Point Temperature",
+    'ztmp': 'Temperature Profile',
+    'zsal': 'Salinity',
+    'hur': 'Relative Humidity', 
+    'wvht': 'Wave Height', 
+    'waterlevel_met_res': 'Meteorological Residual Tidal Elevation', 
+    'waterlevel_wrt_lcd': 'Tidal Elevation WRT Local Chart Datum', 
+    'water_col_ht': 'Water Column Height',
+}
+
 units = {
     'sst':'Deg C',
     'atmp': 'Deg C',

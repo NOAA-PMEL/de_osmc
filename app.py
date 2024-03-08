@@ -15,6 +15,7 @@ import constants
 import db
 import colorcet as cc
 from urllib.request import urlopen
+import dash_ag_grid as dag
 
 import json
 # import ssl
@@ -68,8 +69,7 @@ platform_color = {
     'SHORE AND BOTTOM STATIONS': cc_color_set(10, cc.glasbey_bw_minc_20),
     'TIDE GAUGE STATIONS': cc_color_set(11, cc.glasbey_bw_minc_20),
     'TROPICAL MOORED BUOYS': cc_color_set(12, cc.glasbey_bw_minc_20),
-    # 'TSUNAMI WARNING STATIONS': cc_color_set(13, cc.glasbey_bw_minc_20),  We aren't processing the data for these into the local DB.
-    # Could be added if desired.
+    'TSUNAMI WARNING STATIONS': cc_color_set(21, cc.glasbey_bw_minc_20),
     'UNKNOWN': cc_color_set(14, cc.glasbey_bw_minc_20),
     'UNCREWED SURFACE VEHICLE': cc_color_set(15, cc.glasbey_bw_minc_20),
     'VOLUNTEER OBSERVING SHIPS': cc_color_set(16, cc.glasbey_bw_minc_20),
@@ -102,6 +102,18 @@ platform_color = {
 #     'WEATHER BUOYS': '#000000',
 #     'WEATHER OBS': '#737373',
 # }
+
+
+varByPlatform_defs = [
+    {"field": "platform_type", "pinned": "left", 'headerName': "Platform Type"},
+    {"field": "count", "pinned": "left", "headerName":"Number of Platforms of this Type", 'type': 'rightAligned', "valueFormatter": {"function": "d3.format(',d')(params.value)"}},
+    {"field":'total', "headerName": 'Total', 'type': 'rightAligned', "valueFormatter": {"function": "d3.format(',d')(params.value)"}}
+]
+for var in constants.surface_variables:
+    varByPlatform_defs.append({"field":var, "headerName": constants.long_names[var], 'type': 'rightAligned', "valueFormatter": {"function": "d3.format(',d')(params.value)"},})
+for var in constants.depth_variables:
+    varByPlatform_defs.append({"field":var, "headerName": constants.long_names[var], 'type': 'rightAligned', "valueFormatter": {"function": "d3.format(',d')(params.value)"}})
+
 
 country_color = {
     'AUSTRALIA' : cc_color_set(21, cc.glasbey_bw_minc_20),
@@ -225,7 +237,44 @@ app.layout = ddk.App([
                     clearable=True,
                     multi=True,
                     style={'padding-left': '10px'},
-                    options=[],
+                    options=[
+                        {'value': "AUSTRALIA", 'label': 'Australia'},
+                        {'value': "BAHAMAS", 'label': 'Bahamas'},
+                        {'value': 'BENIN', 'label': 'Benin'},
+                        {'value': "BRAZIL", 'label': 'Brazil'},
+                        {'value': 'BULGARIA', 'label': 'Bulgaria'},
+                        {'value': "CANADA", 'label': 'Canada'},
+                        {'value': "CHINA", 'label': 'China'},
+                        {'value': 'CROATIA', 'label': 'Croatia'},
+                        {'value': 'EL SALVADOR', 'label': 'El Salvador'},
+                        {'value': "EUROPEAN UNION", 'label': 'European Union'},
+                        {'value': "FRANCE", 'label': 'France'},
+                        {'value': "GERMANY", 'label': 'Germany'},
+                        {'value': 'GREECE', 'label' : 'Greece'},
+                        {'value': 'HONG KONG', 'label': 'Hong Kong'},
+                        {'value': "INDIA", 'label': 'India'},
+                        {'value': 'IRAN, ISLAMIC REPUBLIC OF', 'label' : 'Iran, Islamic Republic of'},
+                        {'value': "IRELAND", 'label': 'Ireland'},
+                        {'value': 'ISRAEL', 'label': 'Israel'},
+                        {'value': 'ITALY', 'label': 'Italy'},
+                        {'value': "JAPAN", 'label': 'Japan'},
+                        {'value': "KOREA, REPUBLIC OF", 'label': 'South Korea'},
+                        {'value': 'NETHERLANDS', 'label' : 'Netherlands'},
+                        {'value': 'NEW ZEALAND', 'label' : 'New Zealand'},
+                        {'value': 'NORWAY', 'label' : 'Norway'},
+                        {'value': 'PHILIPPINES', 'label' : 'Philippines'},
+                        {'value': 'POLAND', 'label' : 'Poland'},
+                        {'value': 'PORTUGAL', 'label' : 'Portugal'},
+                        {'value': 'ROMANIA', 'label' : 'Romania'},
+                        {'value': 'RUSSIAN FEDERATION', 'label' : 'Russian Federation'},
+                        {'value': "SPAIN", 'label': 'Spain'},
+                        {'value': "SOUTH AFRICA", 'label': 'South Africa'},
+                        {'value': 'SYRIAN ARAB REPUBLIC', 'label' : 'Syrian Arab Republic'},
+                        {'value': "UKRAINE", 'label': 'Ukraine'},
+                        {'value': "UNITED KINGDOM", 'label': 'United Kingdom'},
+                        {'value': "UNITED STATES", 'label': 'United States'},
+                        {'value': 'UNKNOWN', 'label': 'Unknown'},
+                    ],
                 ),
                 ddk.Row(ddk.Title('Parameter:', style={'font-size':'.8em', 'padding-left': '5px'})),
                 dcc.Dropdown(
@@ -233,7 +282,16 @@ app.layout = ddk.App([
                     clearable=True,
                     multi=True,
                     style={'padding-left': '10px'},
-                    options=[],
+                    options=[
+                        {'value':'sst','label': 'Sea Surface Temperature'},
+                        {'value':'ztmp','label': 'Temperature Profile'},
+                        {'value':'slp','label': 'Sea Level Pressure'},
+                        {'value':'atmp','label': 'Air Temperature'},
+                        {'value':'zsal','label': 'Salinity'},
+                        {'value':'windspd','label': 'Wind Speed'},
+                        {'value':'winddir','label': 'Wind Direction'},
+                        {'value':'clouds','label': 'Clouds'},
+                    ]
                 ),
                 ddk.Row(ddk.Title('Platform Type:', style={'font-size':'.8em', 'padding-left': '5px'})),
                 dcc.Dropdown(
@@ -241,12 +299,37 @@ app.layout = ddk.App([
                     clearable=True,
                     multi=True,
                     style={'padding-left': '10px'},
-                    options=[]
+                    options=[
+                        {'label': 'ARGO', 'value': 'ARGO'},
+                        {'label': 'C-MAN WEATHER STATIONS', 'value': 'C-MAN WEATHER STATIONS'},
+                        {'label': 'CLIMATE REFERENCE MOORED BUOYS', 'value': 'CLIMATE REFERENCE MOORED BUOYS'},
+                        {'label': 'DRIFTING BUOYS', 'value': 'DRIFTING BUOYS'},
+                        {'label': 'GLIDERS', 'value': 'GLIDERS'},
+                        {'label': 'ICE BUOYS', 'value': 'ICE BUOYS'},
+                        {'label': 'MOORED BUOYS', 'value': 'MOORED BUOYS'},
+                        {'label': 'RESEARCH', 'value': 'RESEARCH'},
+                        {'label': 'SHIPS', 'value': 'SHIPS'},
+                        {'label': 'SHORE AND BOTTOM STATIONS', 'value': 'SHORE AND BOTTOM STATIONS'},
+                        {'label': 'TAGGED ANIMAL', 'value': 'TAGGED ANIMAL'},
+                        {'label': 'TIDE GAUGE STATIONS', 'value': 'TIDE GAUGE STATIONS'},
+                        {'label': 'TROPICAL MOORED BUOYS', 'value': 'TROPICAL MOORED BUOYS'},
+                        {'label': 'TSUNAMI WARNING STATIONS', 'value': 'TSUNAMI WARNING STATIONS'},
+                        {'label': 'UNKNOWN', 'value': 'UNKNOWN'},
+                        {'label': 'UNCREWED SURFACE VEHICLE', 'value': 'UNCREWED SURFACE VEHICLE'},
+                        {'label': 'VOLUNTEER OBSERVING SHIPS', 'value': 'VOLUNTEER OBSERVING SHIPS'},
+                        {'label': 'VOSCLIM', 'value': 'VOSCLIM'},
+                        {'label': 'WEATHER AND OCEAN OBS', 'value': 'WEATHER AND OCEAN OBS'},
+                        {'label': 'WEATHER BUOYS', 'value': 'WEATHER BUOYS'},
+                        {'label': 'WEATHER OBS', 'value': 'WEATHER OBS'}
+                    ]
                 ),
                 ddk.Row(ddk.Title('Color Markers by:', style={'font-size':'.8em', 'padding-left': '5px'})),
                 dcc.RadioItems(
                     id='color-by',
-                    options=[],
+                    options=[
+                        {'label': 'Platform Type', 'value': 'platform_type'},
+                        {'label': 'Country', 'value': 'country'},
+                    ],
                 ),
                 ddk.Row(ddk.Title('Find Platforms:', style={'font-size':'.8em', 'padding-left': '5px'})),
                 dcc.Dropdown(
@@ -289,9 +372,11 @@ app.layout = ddk.App([
             ddk.CardHeader(id='map-card-header', 
                            modal=True, 
                            modal_config={'height': 90, 'width': 95}, 
-                           fullscreen=True
-                           ),
-            dcc.Graph(id='location-map', style={'padding-left': '20px'}),
+                           fullscreen=True,
+                           children=[
+                                html.Button(id='counts-button', children=['Data Counts Table'], style={'font-size':'.8em', 'width':'300px'},)
+                           ]),
+            ddk.Graph(id='location-map', style={'padding-left': '20px'}),
         ]),
     ]),
     ddk.Block(width=100, children=[
@@ -363,7 +448,42 @@ app.layout = ddk.App([
             ])
         ])
     ]),
+    dmc.Modal(
+        size="90%",
+        title="Platform Counts",
+        id="counts-modal",
+        overflow="inside",
+        zIndex=10000,
+        children=[
+            ddk.Card(children=[
+                ddk.CardHeader('Number of Observations per Variable by Platform Type'),
+                dag.AgGrid(id='nobsByVarAndPlatform', columnDefs=varByPlatform_defs)
+            ]),
+        ],
+    ),
 ])
+
+
+@app.callback(
+    [
+        Output("counts-modal", "opened"),
+        Output("nobsByVarAndPlatform", "rowData"),
+    ],
+    [
+        Input("counts-button", "n_clicks"),
+    ],
+    [
+        State("counts-modal", "opened"),
+    ],prevent_initial_call=True,
+)
+def modal_demo(nc1, opened):
+    nobs_df = db.get_nobs('platform_type')
+    counts_df = db.get_platform_counts('platform_type')
+    all_df = counts_df.merge(nobs_df, how='inner', on='platform_type')
+    all_df.loc['total']= all_df.sum(numeric_only=True)
+    all_df.at['total', 'platform_type'] = "TOTAL"
+    return [not opened, all_df.to_dict("records")]
+
 
 @app.callback(
     Output("info-popover", "hide"),
@@ -413,7 +533,12 @@ def fetch_info(click, in_info_ui_state, in_hide):
 ##
 # This runs on-load and builds the control and sets the options and values of the controls based on the state of the URL.
 @app.callback([
-    Output('control-block', 'children'),
+    Output('country', 'value'),
+    Output('variable', 'value'),
+    Output('platform-type', 'value'),
+    Output('color-by', 'value'),
+    Output('platform-code', 'options'),
+    Output('platform-code', 'value'),
     Output('markers', 'value'),
 ],[
     Input('trigger', 'n_intervals'),
@@ -498,156 +623,11 @@ def read_url(trigger):
     for codey in codes_to_show:
        platform_code_options.append({'label': codey, 'value': codey})
 
-    control_block = [
-        ddk.Card(
-            children=[
-                ddk.Row(ddk.Title('Country:', style={'font-size':'.8em', 'padding-left':'5px'})),
-                dcc.Dropdown(
-                    id='country',
-                    clearable=True,
-                    multi=True,
-                    style={'padding-left': '10px'},
-                    options=[
-                        {'value': "AUSTRALIA", 'label': 'Australia'},
-                        {'value': "BAHAMAS", 'label': 'Bahamas'},
-                        {'value': 'BENIN', 'label': 'Benin'},
-                        {'value': "BRAZIL", 'label': 'Brazil'},
-                        {'value': 'BULGARIA', 'label': 'Bulgaria'},
-                        {'value': "CANADA", 'label': 'Canada'},
-                        {'value': "CHINA", 'label': 'China'},
-                        {'value': 'CROATIA', 'label': 'Croatia'},
-                        {'value': 'EL SALVADOR', 'label': 'El Salvador'},
-                        {'value': "EUROPEAN UNION", 'label': 'European Union'},
-                        {'value': "FRANCE", 'label': 'France'},
-                        {'value': "GERMANY", 'label': 'Germany'},
-                        {'value': 'GREECE', 'label' : 'Greece'},
-                        {'value': 'HONG KONG', 'label': 'Hong Kong'},
-                        {'value': "INDIA", 'label': 'India'},
-                        {'value': 'IRAN, ISLAMIC REPUBLIC OF', 'label' : 'Iran, Islamic Republic of'},
-                        {'value': "IRELAND", 'label': 'Ireland'},
-                        {'value': 'ISRAEL', 'label': 'Israel'},
-                        {'value': 'ITALY', 'label': 'Italy'},
-                        {'value': "JAPAN", 'label': 'Japan'},
-                        {'value': "KOREA, REPUBLIC OF", 'label': 'South Korea'},
-                        {'value': 'NETHERLANDS', 'label' : 'Netherlands'},
-                        {'value': 'NEW ZEALAND', 'label' : 'New Zealand'},
-                        {'value': 'NORWAY', 'label' : 'Norway'},
-                        {'value': 'PHILIPPINES', 'label' : 'Philippines'},
-                        {'value': 'POLAND', 'label' : 'Poland'},
-                        {'value': 'PORTUGAL', 'label' : 'Portugal'},
-                        {'value': 'ROMANIA', 'label' : 'Romania'},
-                        {'value': 'RUSSIAN FEDERATION', 'label' : 'Russian Federation'},
-                        {'value': "SPAIN", 'label': 'Spain'},
-                        {'value': "SOUTH AFRICA", 'label': 'South Africa'},
-                        {'value': 'SYRIAN ARAB REPUBLIC', 'label' : 'Syrian Arab Republic'},
-                        {'value': "UKRAINE", 'label': 'Ukraine'},
-                        {'value': "UNITED KINGDOM", 'label': 'United Kingdom'},
-                        {'value': "UNITED STATES", 'label': 'United States'},
-                        {'value': 'UNKNOWN', 'label': 'Unknown'},
-                    ],
-                    value=out_country
-                ),
-                ddk.Row(ddk.Title('Parameter:', style={'font-size':'.8em', 'padding-left': '5px'})),
-                dcc.Dropdown(
-                    id='variable',
-                    clearable=True,
-                    multi=True,
-                    style={'padding-left': '10px'},
-                    options=[
-                        {'value':'sst','label': 'Sea Surface Temperature'},
-                        {'value':'ztmp','label': 'Temperature Profile'},
-                        {'value':'slp','label': 'Sea Level Pressure'},
-                        {'value':'atmp','label': 'Air Temperature'},
-                        {'value':'zsal','label': 'Salinity'},
-                        {'value':'windspd','label': 'Wind Speed'},
-                        {'value':'winddir','label': 'Wind Direction'},
-                        {'value':'clouds','label': 'Clouds'},
-                    ],
-                    value=out_variable
-                ),
-                ddk.Row(ddk.Title('Platform Type:', style={'font-size':'.8em', 'padding-left': '5px'})),
-                dcc.Dropdown(
-                    id='platform-type',
-                    clearable=True,
-                    multi=True,
-                    style={'padding-left': '10px'},
-                    value=out_platform_type,
-                    options=[
-                        {'label': 'ARGO', 'value': 'ARGO'},
-                        {'label': 'C-MAN WEATHER STATIONS', 'value': 'C-MAN WEATHER STATIONS'},
-                        {'label': 'CLIMATE REFERENCE MOORED BUOYS', 'value': 'CLIMATE REFERENCE MOORED BUOYS'},
-                        {'label': 'DRIFTING BUOYS', 'value': 'DRIFTING BUOYS'},
-                        {'label': 'GLIDERS', 'value': 'GLIDERS'},
-                        {'label': 'ICE BUOYS', 'value': 'ICE BUOYS'},
-                        {'label': 'MOORED BUOYS', 'value': 'MOORED BUOYS'},
-                        {'label': 'RESEARCH', 'value': 'RESEARCH'},
-                        {'label': 'SHIPS', 'value': 'SHIPS'},
-                        {'label': 'SHORE AND BOTTOM STATIONS', 'value': 'SHORE AND BOTTOM STATIONS'},
-                        {'label': 'TAGGED ANIMAL', 'value': 'TAGGED ANIMAL'},
-                        {'label': 'TIDE GAUGE STATIONS', 'value': 'TIDE GAUGE STATIONS'},
-                        {'label': 'TROPICAL MOORED BUOYS', 'value': 'TROPICAL MOORED BUOYS'},
-                        {'label': 'TSUNAMI WARNING STATIONS', 'value': 'TSUNAMI WARNING STATIONS'},
-                        {'label': 'UNKNOWN', 'value': 'UNKNOWN'},
-                        {'label': 'UNCREWED SURFACE VEHICLE', 'value': 'UNCREWED SURFACE VEHICLE'},
-                        {'label': 'VOLUNTEER OBSERVING SHIPS', 'value': 'VOLUNTEER OBSERVING SHIPS'},
-                        {'label': 'VOSCLIM', 'value': 'VOSCLIM'},
-                        {'label': 'WEATHER AND OCEAN OBS', 'value': 'WEATHER AND OCEAN OBS'},
-                        {'label': 'WEATHER BUOYS', 'value': 'WEATHER BUOYS'},
-                        {'label': 'WEATHER OBS', 'value': 'WEATHER OBS'}
-                    ]
-                ),
-                ddk.Row(ddk.Title('Color Markers by:', style={'font-size':'.8em', 'padding-left': '5px'})),
-                dcc.RadioItems(
-                    id='color-by',
-                    options=[
-                        {'label': 'Platform Type', 'value': 'platform_type'},
-                        {'label': 'Country', 'value': 'country'},
-                    ],
-                    value=out_color_by
-                ),
-                ddk.Row(ddk.Title('Find Platforms:', style={'font-size':'.8em', 'padding-left': '5px'})),
-                dcc.Dropdown(
-                    id='platform-code',
-                    clearable=True,
-                    multi=False,
-                    style={'padding-left': '10px'},
-                    options=platform_code_options,
-                    value = out_platform_code
-                ),
-                html.Hr(style={'border': '1px solid black'}),
-                ddk.Row(ddk.Title('Plot Options:', style={'font-size':'.8em', 'padding-left': '5px'})),
-                dcc.Dropdown(
-                    id='markers',
-                    options=[
-                        {'label': 'Both lines and markers', 'value': 'both'},
-                        {'label': 'Markers only', 'value': 'markers'},
-                        {'label': 'Lines only', 'value': 'lines'}
-                    ],
-                    value='lines',
-                    clearable=False,
-                    multi=False
-                ),
-                html.Hr(style={'border': '1px solid black'}),
-                ddk.Row(dcc.Loading(html.A(html.Button(id='download-button', children=['Download'], style={'font-size':'.8em', 'padding-left': '5px'},), target='_blank', id='download-link'))),
-                dcc.Dropdown(
-                    style={'margin-right': '5px'},
-                    id='download-format',
-                    options=[
-                        {'label': 'CSV', 'value': '.csv'},
-                        {'label': 'netCDF', 'value': '.ncCF'},
-                        {'label': 'HTML', 'value': '.htmlTable'}
-                    ],
-                    placeholder='Select Download Format',
-                    multi=False
-                )
-            ]
-        )]
-
-    return [control_block, out_line_marker_setting]
+    return [out_country, out_variable, out_platform_type, out_color_by, platform_code_options, out_platform_code, out_line_marker_setting]
 
 
 @app.callback([
-    Output('platform-code', 'options'),
+    Output('platform-code', 'options', allow_duplicate=True),
 ],[
     Input('variable', 'value'), 
     Input('platform-type', 'value'),
@@ -707,7 +687,7 @@ def set_platform_list(list_variable_in, list_platform_type_in, list_country_in):
 
 @app.callback(
     [
-        Output('platform-code', 'value')
+        Output('platform-code', 'value', allow_duplicate=True)
     ],
     [
         Input('location-map', 'clickData')
@@ -811,7 +791,7 @@ def set_ui_state(state_in_variable, state_in_platform_type, state_in_country, st
 @app.callback(
     [
         Output('location-map', 'figure'),
-        Output('map-card-header', 'children'),
+        Output('map-card-header', 'title'),
         Output('map-loader', 'children'),
     ],
     [
@@ -933,7 +913,7 @@ def show_platforms(in_ui_state):
                                           customdata=map_trace_df['platform_code'], 
                                           uid=icat)
         location_map.add_trace(platform_dots)
-    location_map.update_layout(uirevision=ui_revision)
+    # location_map.update_layout(uirevision=ui_revision)
     if platform_trace is not None:
         location_map.add_trace(platform_trace)
     location_map.update_layout(
@@ -979,6 +959,7 @@ def show_platforms(in_ui_state):
                         fillcolor=fill_color,
                         line=dict(color=line_color))
             location_map.add_trace(cone_map)
+    location_map.update_traces(showlegend=True)
     return [location_map, title, 'done']
 
 

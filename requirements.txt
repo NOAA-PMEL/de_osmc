@@ -12,3 +12,4 @@ celery==4.4.7
 colorcet==3.0.0
 dash-iconify
 importlib-metadata==4.13.0
+dash-ag-grid
