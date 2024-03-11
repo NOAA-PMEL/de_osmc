@@ -291,6 +291,12 @@ app.layout = ddk.App([
                         {'value':'windspd','label': 'Wind Speed'},
                         {'value':'winddir','label': 'Wind Direction'},
                         {'value':'clouds','label': 'Clouds'},
+                        {'value': 'dew_point', 'label': 'Dew Point Temperature'},
+                        {'value': 'hur', 'label': 'Relative Humidity'},
+                        {'value': 'wvht', 'label': 'Sea Surface Wave Significant Height'},
+                        {'value': 'waterlevel_met_res', 'label': 'Meteorological Residual Tidal Elevation'},
+                        {'value': 'waterlevel_wrt_lcd', 'label': 'Tidal Elevation WRT Local Chart Datum'},
+                        {'value': 'water_col_ht', 'label': 'Water Column Height'}                        
                     ]
                 ),
                 ddk.Row(ddk.Title('Platform Type:', style={'font-size':'.8em', 'padding-left': '5px'})),
@@ -456,7 +462,7 @@ app.layout = ddk.App([
         zIndex=10000,
         children=[
             ddk.Card(style={'height': '80vh'}, children=[
-                ddk.CardHeader('Number of Observations per Variable by Platform Type'),
+                ddk.CardHeader(id='table-header', children='Number of Observations per Variable by Platform Type'),
                 dag.AgGrid(id='nobsByVarAndPlatform', columnDefs=varByPlatform_defs, style={'height':'75vh'})
             ]),
         ],
@@ -469,6 +475,7 @@ app.layout = ddk.App([
     [
         Output("counts-modal", "opened"),
         Output("nobsByVarAndPlatform", "rowData"),
+        Output("table-header", "children")
     ],
     [
         Input("counts-button", "n_clicks"),
@@ -483,7 +490,9 @@ def modal_demo(nc1, opened):
     all_df = counts_df.merge(nobs_df, how='inner', on='platform_type')
     all_df.loc['total']= all_df.sum(numeric_only=True)
     all_df.at['total', 'platform_type'] = "TOTAL"
-    return [not opened, all_df.to_dict("records")]
+    r = db.get_range('time')
+    title = 'Number of Observations per Variable by Platform Type from ' + r.loc[0]['min_time'] + ' to ' + r.loc[0]['max_time']
+    return [not opened, all_df.to_dict("records"), title]
 
 
 @app.callback(

@@ -98,10 +98,16 @@ def get_nobs(grouping):
 
 def get_platform_counts(grouping):
     platform_count = pd.read_sql(
-        "SELECT {}, count(*) from {} GROUP BY {} ORDER BY {}".format(grouping, constants.locations_table, grouping, grouping), constants.postgres_engine
+        "SELECT {}, count(*) FROM {} GROUP BY {} ORDER BY {}".format(grouping, constants.locations_table, grouping, grouping), constants.postgres_engine
     )
     platform_dict = dict(zip(platform_count[grouping], platform_count['count']))
     return platform_count
+
+def get_range(column):
+    column_range = pd.read_sql(
+        "SELECT min({}) AS min_{}, MAX({}) as max_{} FROM {}".format(column, column, column, column, constants.data_table), constants.postgres_engine
+    )
+    return column_range;
 
 def get_counts():
     # In this function, we retrieve the data from postgres using pandas's read_sql method.
