@@ -474,8 +474,6 @@ app.layout = ddk.App([
 @app.callback(
     [
         Output("counts-modal", "opened"),
-        Output("nobsByVarAndPlatform", "rowData"),
-        Output("table-header", "children")
     ],
     [
         Input("counts-button", "n_clicks"),
@@ -484,16 +482,31 @@ app.layout = ddk.App([
         State("counts-modal", "opened"),
     ],prevent_initial_call=True,
 )
-def modal_demo(nc1, opened):
-    nobs_df = db.get_nobs('platform_type')
-    counts_df = db.get_platform_counts('platform_type')
-    all_df = counts_df.merge(nobs_df, how='inner', on='platform_type')
-    all_df.loc['total']= all_df.sum(numeric_only=True)
-    all_df.at['total', 'platform_type'] = "TOTAL"
-    r = db.get_range('time')
-    title = 'Number of Observations per Variable by Platform Type from ' + r.loc[0]['min_time'] + ' to ' + r.loc[0]['max_time']
-    return [not opened, all_df.to_dict("records"), title]
+def model_state(nc1, opened):
+    return not opened,
 
+
+@app.callback(
+    [
+        Output("nobsByVarAndPlatform", "rowData"),
+        Output("table-header", "children")
+    ],
+    [
+        Input("counts-modal", "opened"),
+    ]
+)
+def get_table(is_open):
+    if is_open:
+        nobs_df = db.get_nobs('platform_type')
+        counts_df = db.get_platform_counts('platform_type')
+        all_df = counts_df.merge(nobs_df, how='inner', on='platform_type')
+        all_df.loc['total']= all_df.sum(numeric_only=True)
+        all_df.at['total', 'platform_type'] = "TOTAL"
+        r = db.get_range('time')
+        title = 'Number of Observations per Variable by Platform Type from ' + r.loc[0]['min_time'] + ' to ' + r.loc[0]['max_time']
+        return [all_df.to_dict("records"), title]
+    else:
+        raise exceptions.PreventUpdate
 
 @app.callback(
     Output("info-popover", "hide"),
