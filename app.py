@@ -291,7 +291,7 @@ app.layout = ddk.App([
                         {'value':'windspd','label': 'Wind Speed'},
                         {'value':'winddir','label': 'Wind Direction'},
                         {'value':'clouds','label': 'Clouds'},
-                        {'value': 'dew_point', 'label': 'Dew Point Temperature'},
+                        {'value': 'dewpoint', 'label': 'Dew Point Temperature'},
                         {'value': 'hur', 'label': 'Relative Humidity'},
                         {'value': 'wvht', 'label': 'Sea Surface Wave Significant Height'},
                         {'value': 'waterlevel_met_res', 'label': 'Meteorological Residual Tidal Elevation'},
