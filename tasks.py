@@ -133,7 +133,7 @@ def append_new_observations():
     # and when if_exists='replace', a new table overwrites the old one.
     logger.info('Updating data...')
     if df.shape[0] > 0:
-        df.to_sql(constants.data_table, constants.postgres_engine, if_exists='append', index=False, chunksize=1500, method=None)
+        df.to_sql(constants.data_table, constants.postgres_engine, if_exists='append', index=False, chunksize=1500, method='multi')
 
     # These are small and should be made to match the data in the database, so replace them
     df = db.get_data(None)

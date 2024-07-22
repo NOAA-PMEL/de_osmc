@@ -21,7 +21,7 @@ def delete_all():
 
 
 def drop_all():
-    metadata = MetaData(bind=constants.postgres_engine, reflect=True)
+    metadata = MetaData()
     d_table = Table(constants.data_table, metadata)
     d_table.drop(constants.postgres_engine, checkfirst=True)
     c_table = Table(constants.counts_table, metadata)
