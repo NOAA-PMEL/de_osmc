@@ -9,7 +9,7 @@ celery
 colorcet
 dash-iconify
 dash-ag-grid
-pandas==1.4.1
-psycopg2-binary==2.8.6
-sqlalchemy==1.4.31
 pg8000
+pandas==1.1.5
+pg8000==1.16.5
+SQLAlchemy==1.3.20
