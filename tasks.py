@@ -30,7 +30,7 @@ def setup_periodic_tasks(sender, **kwargs):
          name='Initial Load of Observations'
     )
     sender.add_periodic_task(
-         crontab(hour='*', minute='38'),
+         crontab(hour='*', minute='05'),
          append_new_observations.s(),
          name='Append New Observations'
     )
@@ -133,8 +133,11 @@ def append_new_observations():
     # and when if_exists='replace', a new table overwrites the old one.
     logger.info('Updating data...')
     if df.shape[0] > 0:
+        logger.info('Writing csv...')
         df.to_csv('../mount/update.csv')
+        logger.info('Loading to postgress...')
         db.bulk_load(constants.data_table, '../mount/update.csv')
+        logger.info('Data update complete...')
         # df.to_sql(constants.data_table, constants.postgres_engine, if_exists='append', index=False, chunksize=500)
 
     # These are small and should be made to match the data in the database, so replace them
