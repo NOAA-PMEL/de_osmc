@@ -47,22 +47,6 @@ def get_between_days_ago(ago1, ago2):
     )
     return stored_df
 
-def bulk_load(table, file):
-    copy = f'COPY {table} FROM "{file}" CSV HEADER;'
-    constants.postgres_engine.execute(copy)
-
-
-def drop_counts():
-    metadata = MetaData()
-    c_table = Table(constants.counts_table, metadata)
-    c_table.drop(constants.postgres_engine, checkfirst=True)
-
-
-def drop_locations():
-    metadata = MetaData()
-    l_table = Table(constants.locations_table, metadata)
-    l_table.drop(constants.postgres_engine, checkfirst=True)
-
 
 def get_data(platform):
     # In this function, we retrieve the data from postgres using pandas's read_sql method.

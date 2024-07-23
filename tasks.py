@@ -30,7 +30,7 @@ def setup_periodic_tasks(sender, **kwargs):
          name='Initial Load of Observations'
     )
     sender.add_periodic_task(
-         crontab(hour='*', minute='45'),
+         crontab(hour='*', minute='07'),
          append_new_observations.s(),
          name='Append New Observations'
     )
@@ -106,6 +106,7 @@ def append_new_observations():
         ago1 = 45-((days+1)*5)
         ago2 = 45-(days*5)
         logger.info('checking for duplicates in days: ' + str(ago1) + ' to ' + str(ago2) + ' ago.' )
+        print('checking for duplicates in days: ' + str(ago1) + ' to ' + str(ago2) + ' ago.' )
         stored_df = db.get_between_days_ago(ago1, ago2)
         stored_df = stored_df.assign(source='db')
         logger.info(str(stored_df.shape[0]) + ' obervations found in database.')
@@ -115,6 +116,7 @@ def append_new_observations():
         df.drop(df[['latitude', 'longitude', 'observation_depth','millis']].round(PRECISION).duplicated().loc[lambda latitude: latitude].index, inplace=True)
         df = df[df['source']=='erddap']
         logger.info(str(df.shape[0]) + ' observations that are not stored remain after checking this day range.')
+        print(str(df.shape[0]) + ' observations that are not stored remain after checking this day range.')
 
     df = df[columns]
     df = df.dropna(subset=['latitude','longitude'], how='any')
@@ -132,13 +134,10 @@ def append_new_observations():
     # and the SQLAlchemy engine we created above. When if_exists='append' we add the rows to our table
     # and when if_exists='replace', a new table overwrites the old one.
     logger.info('Updating data...')
+    print('updateing data')
     if df.shape[0] > 0:
-        logger.info('Writing csv...')
-        df.to_csv('../mount/update.csv')
-        logger.info('Loading to postgress...')
-        db.bulk_load(constants.data_table, '../mount/update.csv')
-        logger.info('Data update complete...')
-        # df.to_sql(constants.data_table, constants.postgres_engine, if_exists='append', index=False, chunksize=500)
+        df.to_csv('../mount/update.csv', index=False)
+        df.to_sql(constants.data_table, constants.postgres_engine, if_exists='append', index=False, chunksize=500, method='multi')
 
     # These are small and should be made to match the data in the database, so replace them
     df = db.get_data(None)
@@ -149,16 +148,12 @@ def append_new_observations():
     counts_df.reset_index(inplace=True)
 
     logger.info('Updating counts...')
-    counts_df.to_csv('../mount/counts.csv')
-    db.drop_counts()
-    db.bulk_load(constants.counts_table, '../mount/counts.csv')
-    logger.info('Counts updated...')
-    # counts_df.to_sql(constants.counts_table, constants.postgres_engine, if_exists='replace', index=False)
+    print('updating counts')
+    counts_df.to_csv('../mount/counts.csv', index=False)
+    counts_df.to_sql(constants.counts_table, constants.postgres_engine, if_exists='replace', index=False, method='multi')
     logger.info('Updating locations...')
-    locations_df.to_csv('../mount/locations.csv')
-    db.bulk_load(constants.locations_table, '../mount/locations.csv')
-    # locations_df.to_sql(constants.locations_table, constants.postgres_engine, if_exists='replace', index=False)
-    logger.info('Locations updated...')
+    locations_df.to_csv('../mount/locations.csv', index=False)
+    locations_df.to_sql(constants.locations_table, constants.postgres_engine, if_exists='replace', index=False, method='multi')
     logger.info('Update complete +=+=+=+=')
 
     
