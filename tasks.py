@@ -149,9 +149,17 @@ def append_new_observations():
     counts_df.reset_index(inplace=True)
 
     logger.info('Updating counts...')
-    counts_df.to_sql(constants.counts_table, constants.postgres_engine, if_exists='replace', index=False)
+    counts_df.to_csv('../mount/counts.csv')
+    db.drop_counts()
+    db.bulk_load(constants.counts_table, '../mount/counts.csv')
+    logger.info('Counts updated...')
+    # counts_df.to_sql(constants.counts_table, constants.postgres_engine, if_exists='replace', index=False)
     logger.info('Updating locations...')
-    locations_df.to_sql(constants.locations_table, constants.postgres_engine, if_exists='replace', index=False)
+    locations_df.to_csv('../mount/locations.csv')
+    db.bulk_load(constants.locations_table, '../mount/locations.csv')
+    # locations_df.to_sql(constants.locations_table, constants.postgres_engine, if_exists='replace', index=False)
+    logger.info('Locations updated...')
+    logger.info('Update complete +=+=+=+=')
 
     
     
