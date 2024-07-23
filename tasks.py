@@ -133,10 +133,7 @@ def append_new_observations():
     # and when if_exists='replace', a new table overwrites the old one.
     logger.info('Updating data...')
     if df.shape[0] > 0:
-        end = min(df.shape[0], 500)
-        for i in range(0, end, 500):
-            logger.info(f'Writing {i} to {i+500}.')
-            save(df.loc[i:i+500])
+        df.to_sql(constants.data_table, constants.postgres_engine, if_exists='append', index=False, chunksize=500)
 
     # These are small and should be made to match the data in the database, so replace them
     df = db.get_data(None)
@@ -151,9 +148,7 @@ def append_new_observations():
     logger.info('Updating locations...')
     locations_df.to_sql(constants.locations_table, constants.postgres_engine, if_exists='replace', index=False)
 
-
-def save(df):
-    df.to_sql(constants.data_table, constants.postgres_engine, if_exists='append', index=False, chunksize=500)
+    
     
 @celery_app.task
 def counts_and_location():

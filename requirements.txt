@@ -2,13 +2,13 @@ click
 dash-design-kit
 gunicorn
 numpy
-pandas
 dash-bootstrap-components
 dash-mantine-components==0.12.1
 redis
-SQLAlchemy
-pg8000
 celery
 colorcet
 dash-iconify
 dash-ag-grid
+pandas==1.4.1
+psycopg2-binary==2.8.6
+sqlalchemy==1.4.31
