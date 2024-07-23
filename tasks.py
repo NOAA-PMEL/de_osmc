@@ -30,7 +30,7 @@ def setup_periodic_tasks(sender, **kwargs):
          name='Initial Load of Observations'
     )
     sender.add_periodic_task(
-         crontab(hour='*', minute='21'),
+         crontab(hour='*', minute='38'),
          append_new_observations.s(),
          name='Append New Observations'
     )
