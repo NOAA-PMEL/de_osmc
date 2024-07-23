@@ -12,3 +12,4 @@ dash-ag-grid
 pandas==1.4.1
 psycopg2-binary==2.8.6
 sqlalchemy==1.4.31
+pg8000
