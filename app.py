@@ -820,9 +820,11 @@ def set_ui_state(state_in_variable, state_in_platform_type, state_in_country, st
     [
         Input('ui-state', 'data'),
     ],
-     prevent_initial_call=True
+    [
+        State('location-map', 'relayoutData')
+    ],prevent_initial_call=True
 )
-def show_platforms(in_ui_state):
+def show_platforms(in_ui_state, map_state):
     
     cones_df = None
     try:
@@ -835,8 +837,15 @@ def show_platforms(in_ui_state):
     else:
         raise exceptions.PreventUpdate
 
-    location_center = center
-    location_zoom = zoom
+    if map_state and 'mapbox.zoom' in map_state:
+        location_zoom = map_state['mapbox.zoom']
+    else:
+        location_zoom = zoom
+
+    if map_state and 'mapbox.center' in map_state:
+        location_center = map_state['mapbox.center']
+    else:
+        location_center = center
 
     map_df = db.get_locations()
     map_df.dropna(subset=['platform_type'], inplace=True)
@@ -936,9 +945,10 @@ def show_platforms(in_ui_state):
                                           customdata=map_trace_df['platform_code'], 
                                           uid=icat)
         location_map.add_trace(platform_dots)
-    # location_map.update_layout(uirevision=ui_revision)
+    
     if platform_trace is not None:
         location_map.add_trace(platform_trace)
+        
     location_map.update_layout(
         height=map_height,
         mapbox_style="white-bg",
@@ -990,6 +1000,7 @@ def show_platforms(in_ui_state):
                         line=dict(color=line_color))
             location_map.add_trace(cone_map)
     location_map.update_traces(showlegend=True)
+    location_map.update_layout(uirevision=ui_revision)
     return [location_map, title, 'done']
 
 
