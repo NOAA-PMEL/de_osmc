@@ -950,6 +950,13 @@ def show_platforms(in_ui_state):
                 "source": [
                     "https://ibasemaps-api.arcgis.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}?token=" + constants.ESRI_API_KEY
                 ]
+            },
+            {
+                "name": "graticules",
+                "below": 'traces',
+                "sourcetype": "geojson",
+                "type": "fill",
+                "source": 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_110m_graticules_5.geojson'
             }
         ],
         mapbox_zoom=location_zoom,
