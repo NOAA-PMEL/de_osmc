@@ -956,15 +956,18 @@ def show_platforms(in_ui_state, map_state):
             {
                 "below": 'traces',
                 "sourcetype": "raster",
-                "sourceattribution": "Powered by Esri",
+                # "sourceattribution": "Powered by Esri",
+                "sourceattribution": "NOAA National Centers for Environmental Information (NCEI)",
                 "source": [
-                    "https://ibasemaps-api.arcgis.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}?token=" + constants.ESRI_API_KEY
+                    #"https://ibasemaps-api.arcgis.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}?token=" + constants.ESRI_API_KEY
+                    'https://tiles.arcgis.com/tiles/C8EMgrsFcRFL6LrL/arcgis/rest/services/ETOPO1_Global_Relief_Model_Color_Shaded_Relief/MapServer/tile/{z}/{y}/{x}'
                 ]
             },
             {
                 "name": "graticules",
                 "below": 'traces',
                 "sourcetype": "geojson",
+                "fill": {"outlinecolor": '#A7A7A7'},
                 "type": "fill",
                 "source": 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_110m_graticules_5.geojson'
             }
