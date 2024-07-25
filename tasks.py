@@ -123,10 +123,10 @@ def append_new_observations():
     df = df.query('-90.0 <= latitude <= 90')
     df = df.sort_values('time')
     df.reset_index(drop=True, inplace=True)
-    logger.info('First row=')
-    logger.info(df.iloc[0])
-    logger.info('Last row=')
-    logger.info(df.iloc[-1])
+    # logger.info('First row=')
+    # logger.info(df.iloc[0])
+    # logger.info('Last row=')
+    # logger.info(df.iloc[-1])
     logger.info('Found ' + str(df.shape[0]) + ' new observations to append.')
 
 
