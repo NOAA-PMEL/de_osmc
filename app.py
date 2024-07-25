@@ -842,6 +842,21 @@ def show_platforms(in_ui_state, map_state):
     else:
         location_zoom = zoom
 
+    print(location_zoom)
+
+    if location_zoom < 3:
+        print('30')
+        graticules = 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_graticules_30.geojson'
+    elif location_zoom >=3 and location_zoom < 4:
+        print('20')
+        graticules = 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_graticules_20.geojson'
+    elif location_zoom > 4 and location_zoom < 5:
+        print('10')
+        graticules = 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_graticules_10.geojson'
+    else:
+        print('5')
+        graticules = 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_graticules_5.geojson'
+
     if map_state and 'mapbox.center' in map_state:
         location_center = map_state['mapbox.center']
     else:
@@ -972,7 +987,7 @@ def show_platforms(in_ui_state, map_state):
                 "sourcetype": "geojson",
                 "fill": {"outlinecolor": '#A7A7A7'},
                 "type": "fill",
-                "source": 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_110m_graticules_5.geojson'
+                "source": graticules
             }
         ],
         mapbox_zoom=location_zoom,
