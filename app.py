@@ -3,8 +3,6 @@ import dash_design_kit as ddk
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import dash_bootstrap_components as dbc
-import dash_mantine_components as dmc
 from dash_iconify import DashIconify
 import flask
 import urllib
@@ -27,12 +25,11 @@ data_url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60'
 
 app = Dash(
     __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
     title='OSMC'
 )
 server = app.server  # expose server variable for Procfile
 
-version = '1.0'
+version = ' Version 1.1'
 
 center = {'lon': 0.0, 'lat': 0.0}
 zoom = 1.4
@@ -208,282 +205,253 @@ select_graph = select_graph.update_layout(
     ]
 )
 
-app.layout = ddk.App([
-    dcc.Location(id='url', refresh=False),
-    dcc.Interval(id='trigger', n_intervals=0, 
-    max_intervals=0, #<-- only run once
-    interval=1),
-    dcc.Store(id='map-info'),
-    dcc.Store(id='ui-state'),
-    dcc.Store(id='download-url'),
-    ddk.Header([
-        ddk.Logo(src=app.get_asset_url('noaa-logo-rgb-2022.png'), style={'height':'90px'}),
-        ddk.Title('Observing System Monitoring Center'),
-        dcc.Loading(html.Div(id='map-loader', style={'float': 'right', 'display': 'none'}))
-    ]),
-    # ddk.Block(width=.95, children=[
-    #     html.Div('Parts of the US government are closed. This site will not be updated; however, NOAA websites and social media channels necessary to protect lives and property will be maintained. See ', style={'display':'inline'}), 
-    #     html.A('www.weather.gov', href='https://www.weather.gov', style={'display':'inline'}), 
-    #     html.Div(' for critical weather information. To learn more, see ', style={'display': 'inline'}), 
-    #     html.A('www.commerce.gov', href='https://www.commerce.gov', style={'display':'inline'}), 
-    #     html.Div('.', style={'display':'inline'}),
-    # ], style={'margin-left': '40px'}),
-    ddk.Block (id='control-block', width=20, children=[
-        ddk.Card(
-            children=[
-                ddk.Row(ddk.Title('Country:', style={'font-size':'.8em', 'padding-left':'5px'})),
-                dcc.Dropdown(
-                    id='country',
-                    clearable=True,
-                    multi=True,
-                    style={'padding-left': '10px'},
-                    options=[
-                        {'value': "AUSTRALIA", 'label': 'Australia'},
-                        {'value': "BAHAMAS", 'label': 'Bahamas'},
-                        {'value': 'BENIN', 'label': 'Benin'},
-                        {'value': "BRAZIL", 'label': 'Brazil'},
-                        {'value': 'BULGARIA', 'label': 'Bulgaria'},
-                        {'value': "CANADA", 'label': 'Canada'},
-                        {'value': "CHINA", 'label': 'China'},
-                        {'value': 'CROATIA', 'label': 'Croatia'},
-                        {'value': 'EL SALVADOR', 'label': 'El Salvador'},
-                        {'value': "EUROPEAN UNION", 'label': 'European Union'},
-                        {'value': "FRANCE", 'label': 'France'},
-                        {'value': "GERMANY", 'label': 'Germany'},
-                        {'value': 'GREECE', 'label' : 'Greece'},
-                        {'value': 'HONG KONG', 'label': 'Hong Kong'},
-                        {'value': "INDIA", 'label': 'India'},
-                        {'value': 'IRAN, ISLAMIC REPUBLIC OF', 'label' : 'Iran, Islamic Republic of'},
-                        {'value': "IRELAND", 'label': 'Ireland'},
-                        {'value': 'ISRAEL', 'label': 'Israel'},
-                        {'value': 'ITALY', 'label': 'Italy'},
-                        {'value': "JAPAN", 'label': 'Japan'},
-                        {'value': "KOREA, REPUBLIC OF", 'label': 'South Korea'},
-                        {'value': 'NETHERLANDS', 'label' : 'Netherlands'},
-                        {'value': 'NEW ZEALAND', 'label' : 'New Zealand'},
-                        {'value': 'NORWAY', 'label' : 'Norway'},
-                        {'value': 'PHILIPPINES', 'label' : 'Philippines'},
-                        {'value': 'POLAND', 'label' : 'Poland'},
-                        {'value': 'PORTUGAL', 'label' : 'Portugal'},
-                        {'value': 'ROMANIA', 'label' : 'Romania'},
-                        {'value': 'RUSSIAN FEDERATION', 'label' : 'Russian Federation'},
-                        {'value': "SPAIN", 'label': 'Spain'},
-                        {'value': "SOUTH AFRICA", 'label': 'South Africa'},
-                        {'value': 'SYRIAN ARAB REPUBLIC', 'label' : 'Syrian Arab Republic'},
-                        {'value': "UKRAINE", 'label': 'Ukraine'},
-                        {'value': "UNITED KINGDOM", 'label': 'United Kingdom'},
-                        {'value': "UNITED STATES", 'label': 'United States'},
-                        {'value': 'UNKNOWN', 'label': 'Unknown'},
-                    ],
-                ),
-                ddk.Row(ddk.Title('Parameter:', style={'font-size':'.8em', 'padding-left': '5px'})),
-                dcc.Dropdown(
-                    id='variable',
-                    clearable=True,
-                    multi=True,
-                    style={'padding-left': '10px'},
-                    options=[
-                        {'value':'sst','label': 'Sea Surface Temperature'},
-                        {'value':'ztmp','label': 'Temperature Profile'},
-                        {'value':'slp','label': 'Sea Level Pressure'},
-                        {'value':'atmp','label': 'Air Temperature'},
-                        {'value':'zsal','label': 'Salinity'},
-                        {'value':'windspd','label': 'Wind Speed'},
-                        {'value':'winddir','label': 'Wind Direction'},
-                        {'value':'clouds','label': 'Clouds'},
-                        {'value': 'dewpoint', 'label': 'Dew Point Temperature'},
-                        {'value': 'hur', 'label': 'Relative Humidity'},
-                        {'value': 'wvht', 'label': 'Sea Surface Wave Significant Height'},
-                        {'value': 'waterlevel_met_res', 'label': 'Meteorological Residual Tidal Elevation'},
-                        {'value': 'waterlevel_wrt_lcd', 'label': 'Tidal Elevation WRT Local Chart Datum'},
-                        {'value': 'water_col_ht', 'label': 'Water Column Height'}                        
-                    ]
-                ),
-                ddk.Row(ddk.Title('Platform Type:', style={'font-size':'.8em', 'padding-left': '5px'})),
-                dcc.Dropdown(
-                    id='platform-type',
-                    clearable=True,
-                    multi=True,
-                    style={'padding-left': '10px'},
-                    options=[
-                        {'label': 'ARGO', 'value': 'ARGO'},
-                        {'label': 'C-MAN WEATHER STATIONS', 'value': 'C-MAN WEATHER STATIONS'},
-                        {'label': 'CLIMATE REFERENCE MOORED BUOYS', 'value': 'CLIMATE REFERENCE MOORED BUOYS'},
-                        {'label': 'DRIFTING BUOYS', 'value': 'DRIFTING BUOYS'},
-                        {'label': 'GLIDERS', 'value': 'GLIDERS'},
-                        {'label': 'ICE BUOYS', 'value': 'ICE BUOYS'},
-                        {'label': 'MOORED BUOYS', 'value': 'MOORED BUOYS'},
-                        {'label': 'RESEARCH', 'value': 'RESEARCH'},
-                        {'label': 'SHIPS', 'value': 'SHIPS'},
-                        {'label': 'SHORE AND BOTTOM STATIONS', 'value': 'SHORE AND BOTTOM STATIONS'},
-                        {'label': 'TAGGED ANIMAL', 'value': 'TAGGED ANIMAL'},
-                        {'label': 'TIDE GAUGE STATIONS', 'value': 'TIDE GAUGE STATIONS'},
-                        {'label': 'TROPICAL MOORED BUOYS', 'value': 'TROPICAL MOORED BUOYS'},
-                        {'label': 'TSUNAMI WARNING STATIONS', 'value': 'TSUNAMI WARNING STATIONS'},
-                        {'label': 'UNKNOWN', 'value': 'UNKNOWN'},
-                        {'label': 'UNCREWED SURFACE VEHICLE', 'value': 'UNCREWED SURFACE VEHICLE'},
-                        {'label': 'VOLUNTEER OBSERVING SHIPS', 'value': 'VOLUNTEER OBSERVING SHIPS'},
-                        {'label': 'VOSCLIM', 'value': 'VOSCLIM'},
-                        {'label': 'WEATHER AND OCEAN OBS', 'value': 'WEATHER AND OCEAN OBS'},
-                        {'label': 'WEATHER BUOYS', 'value': 'WEATHER BUOYS'},
-                        {'label': 'WEATHER OBS', 'value': 'WEATHER OBS'}
-                    ]
-                ),
-                ddk.Row(ddk.Title('Color Markers by:', style={'font-size':'.8em', 'padding-left': '5px'})),
-                dcc.RadioItems(
-                    id='color-by',
-                    options=[
-                        {'label': 'Platform Type', 'value': 'platform_type'},
-                        {'label': 'Country', 'value': 'country'},
-                    ],
-                ),
-                ddk.Row(ddk.Title('Find Platforms:', style={'font-size':'.8em', 'padding-left': '5px'})),
-                dcc.Dropdown(
-                    id='platform-code',
-                    clearable=True,
-                    multi=False,
-                    style={'padding-left': '10px'},
-                ),
-                html.Hr(style={'border': '1px solid black'}),
-                ddk.Row(ddk.Title('Plot Options:', style={'font-size':'.8em', 'padding-left': '5px'})),
-                dcc.Dropdown(
-                    id='markers',
-                    options=[
-                        {'label': 'Both lines and markers', 'value': 'both'},
-                        {'label': 'Markers only', 'value': 'markers'},
-                        {'label': 'Lines only', 'value': 'lines'}
-                    ],
-                    value='lines',
-                    clearable=False,
-                    multi=False
-                ),
-                html.Hr(style={'border': '1px solid black'}),
-                ddk.Row(dcc.Loading(html.A(html.Button(id='download-button', children=['Download'], style={'font-size':'.8em', 'padding-left': '5px'},), target='_blank', id='download-link'))),
-                dcc.Dropdown(
-                    style={'margin-right': '5px'},
-                    id='download-format',
-                    options=[
-                        {'label': 'CSV', 'value': '.csv'},
-                        {'label': 'netCDF', 'value': '.ncCF'},
-                        {'label': 'HTML', 'value': '.htmlTable'}
-                    ],
-                    placeholder='Select Download Format',
-                    multi=False   
-                )
-            ]
-        )
-    ]),
-    ddk.Block(width=80, children=[
-        ddk.Card(id='map-card', children=[
-            ddk.CardHeader(id='map-card-header', 
-                           modal=True, 
-                           modal_config={'height': 90, 'width': 95}, 
-                           fullscreen=True,
-                           children=[
-                                html.Button(id='counts-button', children=['Data Counts Table'], style={'font-size':'.8em', 'width':'300px'},)
-                           ]),
-            ddk.Graph(id='location-map', style={'padding-left': '20px'}),
+app.layout = ddk.App(show_editor=False, theme=constants.theme, children=[
+        dcc.Location(id='url', refresh=False),
+        dcc.Interval(id='trigger', n_intervals=0, 
+        max_intervals=0, #<-- only run once
+        interval=1),
+        dcc.Store(id='map-info'),
+        dcc.Store(id='ui-state'),
+        dcc.Store(id='download-url'),
+        ddk.Header([
+            ddk.Logo(src=app.get_asset_url('noaa-logo-rgb-2022.png'), style={'height':'90px'}),
+            ddk.Title('Observing System Monitoring Center'),
+            dcc.Loading(html.Div(id='map-loader', style={'float': 'right', 'display': 'none'}))
         ]),
-    ]),
-    ddk.Block(width=100, children=[
-        ddk.Card(width=100, children=[
-            dcc.Loading(
-                ddk.CardHeader(id='plots-header', 
-                    title='Plots...',
-                    modal=True, 
-                    modal_config={'height': 90, 'width': 95}, 
-                    fullscreen=True,
-                    children=[
-                        html.Button(id='info-action', children=[html.Span([
-                            html.I(id='info-icon', className="bi bi-info-circle", ),
-                            '  Platform Information'
-                        ])]),
-                    ]
-                )
-            ),
-            dcc.Loading(
-                dmc.Alert(children=
-                    [
-                        html.Div(id='info-body', children=[html.H1('.'),html.H2('.')]),
-                    ],
-                    title='Fecthing additional information',
-                    id='info-popover',
-                    withCloseButton=True,
-                    hide=True,
-                    color='gray'
-                ),
-            ),
-            dcc.Loading(dcc.Graph(id='plots', style={'padding-left': '20px'})),
-        ])
-    ]),
-    ddk.Card(style={'margin-bottom': '10px'}, children=[
-        dbc.Col(width=12, children=[
-            ddk.Block(children=[
-                dbc.Row(children=[
-                    dbc.Col(width=1, children=[
-                        html.Img(src='https://www.pmel.noaa.gov/sites/default/files/PMEL-meatball-logo-sm.png',
-                                    height=100,
-                                    width=100),
-                    ]),
-                    dbc.Col(width=10, children=[
-                        html.Div(children=[
-                            dcc.Link('National Oceanic and Atmospheric Administration',
-                                        href='https://www.noaa.gov/'),
-                        ]),
-                        html.Div(children=[
-                            dcc.Link('Pacific Marine Environmental Laboratory', href='https://www.pmel.noaa.gov/'),
-                        ]),
-                        html.Div(children=[
-                            dcc.Link('oar.pmel.webmaster@noaa.gov', href='mailto:oar.pmel.webmaster@noaa.gov')
-                        ]),
-                        html.Div(children=[
-                            dcc.Link('DOC |', href='https://www.commerce.gov/'),
-                            dcc.Link(' NOAA |', href='https://www.noaa.gov/'),
-                            dcc.Link(' OAR |', href='https://www.research.noaa.gov/'),
-                            dcc.Link(' PMEL |', href='https://www.pmel.noaa.gov/'),
-                            dcc.Link(' Privacy Policy |', href='https://www.noaa.gov/disclaimer'),
-                            dcc.Link(' Disclaimer |', href='https://www.noaa.gov/disclaimer'),
-                            dcc.Link(' Accessibility', href='https://www.pmel.noaa.gov/accessibility')
-                        ])
-                    ]),
-                    dbc.Col(width=1, children=[
-                        html.Div(style={'font-size': '1.1rem', 'position': 'absolute', 'bottom': '0'},
-                                    children=[version])
-                    ])
-                ])
-            ])
-        ])
-    ]),
-    dmc.Modal(
-        size="90%",
-        title="Platform Counts",
-        id="counts-modal",
-        overflow="outside",
-        zIndex=10000,
-        children=[
-            ddk.Card(style={'height': '80vh'}, children=[
-                ddk.CardHeader(id='table-header', children='Number of Observations per Variable by Platform Type'),
-                dag.AgGrid(id='nobsByVarAndPlatform', columnDefs=varByPlatform_defs, style={'height':'75vh'})
+        # ddk.Block(width=.95, children=[
+        #     html.Div('Parts of the US government are closed. This site will not be updated; however, NOAA websites and social media channels necessary to protect lives and property will be maintained. See ', style={'display':'inline'}), 
+        #     html.A('www.weather.gov', href='https://www.weather.gov', style={'display':'inline'}), 
+        #     html.Div(' for critical weather information. To learn more, see ', style={'display': 'inline'}), 
+        #     html.A('www.commerce.gov', href='https://www.commerce.gov', style={'display':'inline'}), 
+        #     html.Div('.', style={'display':'inline'}),
+        # ], style={'margin-left': '40px'}),
+        ddk.Block (id='control-block', width=20, children=[
+            ddk.Card(
+                children=[
+                    ddk.Row(ddk.Title('Country:', style={'font-size':'.8em', 'padding-left':'5px'})),
+                    dcc.Dropdown(
+                        id='country',
+                        clearable=True,
+                        multi=True,
+                        style={'padding-left': '10px'},
+                        options=[
+                            {'value': "AUSTRALIA", 'label': 'Australia'},
+                            {'value': "BAHAMAS", 'label': 'Bahamas'},
+                            {'value': 'BENIN', 'label': 'Benin'},
+                            {'value': "BRAZIL", 'label': 'Brazil'},
+                            {'value': 'BULGARIA', 'label': 'Bulgaria'},
+                            {'value': "CANADA", 'label': 'Canada'},
+                            {'value': "CHINA", 'label': 'China'},
+                            {'value': 'CROATIA', 'label': 'Croatia'},
+                            {'value': 'EL SALVADOR', 'label': 'El Salvador'},
+                            {'value': "EUROPEAN UNION", 'label': 'European Union'},
+                            {'value': "FRANCE", 'label': 'France'},
+                            {'value': "GERMANY", 'label': 'Germany'},
+                            {'value': 'GREECE', 'label' : 'Greece'},
+                            {'value': 'HONG KONG', 'label': 'Hong Kong'},
+                            {'value': "INDIA", 'label': 'India'},
+                            {'value': 'IRAN, ISLAMIC REPUBLIC OF', 'label' : 'Iran, Islamic Republic of'},
+                            {'value': "IRELAND", 'label': 'Ireland'},
+                            {'value': 'ISRAEL', 'label': 'Israel'},
+                            {'value': 'ITALY', 'label': 'Italy'},
+                            {'value': "JAPAN", 'label': 'Japan'},
+                            {'value': "KOREA, REPUBLIC OF", 'label': 'South Korea'},
+                            {'value': 'NETHERLANDS', 'label' : 'Netherlands'},
+                            {'value': 'NEW ZEALAND', 'label' : 'New Zealand'},
+                            {'value': 'NORWAY', 'label' : 'Norway'},
+                            {'value': 'PHILIPPINES', 'label' : 'Philippines'},
+                            {'value': 'POLAND', 'label' : 'Poland'},
+                            {'value': 'PORTUGAL', 'label' : 'Portugal'},
+                            {'value': 'ROMANIA', 'label' : 'Romania'},
+                            {'value': 'RUSSIAN FEDERATION', 'label' : 'Russian Federation'},
+                            {'value': "SPAIN", 'label': 'Spain'},
+                            {'value': "SOUTH AFRICA", 'label': 'South Africa'},
+                            {'value': 'SYRIAN ARAB REPUBLIC', 'label' : 'Syrian Arab Republic'},
+                            {'value': "UKRAINE", 'label': 'Ukraine'},
+                            {'value': "UNITED KINGDOM", 'label': 'United Kingdom'},
+                            {'value': "UNITED STATES", 'label': 'United States'},
+                            {'value': 'UNKNOWN', 'label': 'Unknown'},
+                        ],
+                    ),
+                    ddk.Row(ddk.Title('Parameter:', style={'font-size':'.8em', 'padding-left': '5px'})),
+                    dcc.Dropdown(
+                        id='variable',
+                        clearable=True,
+                        multi=True,
+                        style={'padding-left': '10px'},
+                        options=[
+                            {'value':'sst','label': 'Sea Surface Temperature'},
+                            {'value':'ztmp','label': 'Temperature Profile'},
+                            {'value':'slp','label': 'Sea Level Pressure'},
+                            {'value':'atmp','label': 'Air Temperature'},
+                            {'value':'zsal','label': 'Salinity'},
+                            {'value':'windspd','label': 'Wind Speed'},
+                            {'value':'winddir','label': 'Wind Direction'},
+                            {'value':'clouds','label': 'Clouds'},
+                            {'value': 'dewpoint', 'label': 'Dew Point Temperature'},
+                            {'value': 'hur', 'label': 'Relative Humidity'},
+                            {'value': 'wvht', 'label': 'Sea Surface Wave Significant Height'},
+                            {'value': 'waterlevel_met_res', 'label': 'Meteorological Residual Tidal Elevation'},
+                            {'value': 'waterlevel_wrt_lcd', 'label': 'Tidal Elevation WRT Local Chart Datum'},
+                            {'value': 'water_col_ht', 'label': 'Water Column Height'}                        
+                        ]
+                    ),
+                    ddk.Row(ddk.Title('Platform Type:', style={'font-size':'.8em', 'padding-left': '5px'})),
+                    dcc.Dropdown(
+                        id='platform-type',
+                        clearable=True,
+                        multi=True,
+                        style={'padding-left': '10px'},
+                        options=[
+                            {'label': 'ARGO', 'value': 'ARGO'},
+                            {'label': 'C-MAN WEATHER STATIONS', 'value': 'C-MAN WEATHER STATIONS'},
+                            {'label': 'CLIMATE REFERENCE MOORED BUOYS', 'value': 'CLIMATE REFERENCE MOORED BUOYS'},
+                            {'label': 'DRIFTING BUOYS', 'value': 'DRIFTING BUOYS'},
+                            {'label': 'GLIDERS', 'value': 'GLIDERS'},
+                            {'label': 'ICE BUOYS', 'value': 'ICE BUOYS'},
+                            {'label': 'MOORED BUOYS', 'value': 'MOORED BUOYS'},
+                            {'label': 'RESEARCH', 'value': 'RESEARCH'},
+                            {'label': 'SHIPS', 'value': 'SHIPS'},
+                            {'label': 'SHORE AND BOTTOM STATIONS', 'value': 'SHORE AND BOTTOM STATIONS'},
+                            {'label': 'TAGGED ANIMAL', 'value': 'TAGGED ANIMAL'},
+                            {'label': 'TIDE GAUGE STATIONS', 'value': 'TIDE GAUGE STATIONS'},
+                            {'label': 'TROPICAL MOORED BUOYS', 'value': 'TROPICAL MOORED BUOYS'},
+                            {'label': 'TSUNAMI WARNING STATIONS', 'value': 'TSUNAMI WARNING STATIONS'},
+                            {'label': 'UNKNOWN', 'value': 'UNKNOWN'},
+                            {'label': 'UNCREWED SURFACE VEHICLE', 'value': 'UNCREWED SURFACE VEHICLE'},
+                            {'label': 'VOLUNTEER OBSERVING SHIPS', 'value': 'VOLUNTEER OBSERVING SHIPS'},
+                            {'label': 'VOSCLIM', 'value': 'VOSCLIM'},
+                            {'label': 'WEATHER AND OCEAN OBS', 'value': 'WEATHER AND OCEAN OBS'},
+                            {'label': 'WEATHER BUOYS', 'value': 'WEATHER BUOYS'},
+                            {'label': 'WEATHER OBS', 'value': 'WEATHER OBS'}
+                        ]
+                    ),
+                    ddk.Row(ddk.Title('Color Markers by:', style={'font-size':'.8em', 'padding-left': '5px'})),
+                    dcc.RadioItems(
+                        id='color-by',
+                        options=[
+                            {'label': 'Platform Type', 'value': 'platform_type'},
+                            {'label': 'Country', 'value': 'country'},
+                        ],
+                    ),
+                    ddk.Row(ddk.Title('Find Platforms:', style={'font-size':'.8em', 'padding-left': '5px'})),
+                    dcc.Dropdown(
+                        id='platform-code',
+                        clearable=True,
+                        multi=False,
+                        style={'padding-left': '10px'},
+                    ),
+                    html.Hr(style={'border': '1px solid black'}),
+                    ddk.Row(ddk.Title('Plot Options:', style={'font-size':'.8em', 'padding-left': '5px'})),
+                    dcc.Dropdown(
+                        id='markers',
+                        options=[
+                            {'label': 'Both lines and markers', 'value': 'both'},
+                            {'label': 'Markers only', 'value': 'markers'},
+                            {'label': 'Lines only', 'value': 'lines'}
+                        ],
+                        value='lines',
+                        clearable=False,
+                        multi=False
+                    ),
+                    html.Hr(style={'border': '1px solid black'}),
+                    ddk.Row(dcc.Loading(html.A(html.Button(id='download-button', children=['Download'], style={'font-size':'.8em', 'padding-left': '5px'},), target='_blank', id='download-link'))),
+                    dcc.Dropdown(
+                        style={'margin-right': '5px'},
+                        id='download-format',
+                        options=[
+                            {'label': 'CSV', 'value': '.csv'},
+                            {'label': 'netCDF', 'value': '.ncCF'},
+                            {'label': 'HTML', 'value': '.htmlTable'}
+                        ],
+                        placeholder='Select Download Format',
+                        multi=False   
+                    )
+                ]
+            )
+        ]),
+        ddk.Block(width=80, children=[
+            ddk.Card(id='map-card', children=[
+                ddk.CardHeader(id='map-card-header', 
+                            modal=True, 
+                            modal_config={'height': 90, 'width': 95}, 
+                            fullscreen=True,
+                            children=[
+                                ddk.Modal(
+                                    width="90%",
+                                    id="counts-modal",
+                                    target_id='counts-modal-content',
+                                    hide_target=True,
+                                    children=[html.Button(id='counts-button', children=['Data Counts Table'], style={'font-size':'.8em', 'width':'300px'},)]
+                                ),                       
+                            ]),
+                ddk.Graph(id='location-map', style={'padding-left': '20px'}),
             ]),
-        ],
-    ),
-    dcc.Clipboard()
-])
+        ]),
+        ddk.Block(width=100, children=[
+            ddk.Card(width=100, children=[
+                dcc.Loading(
+                    ddk.CardHeader(id='plots-header', 
+                        title='Plots...',
+                        modal=True, 
+                        modal_config={'height': 90, 'width': 95}, 
+                        fullscreen=True,
+                        children=[
+                            ddk.Modal(width="90%", id='info-modal', target_id='info-modal-card', hide_target=True, children=[
+                                html.Button(id='info-action', children=[html.Span([
+                                    html.I(id='info-icon', className="bi bi-info-circle", ),
+                                    '  Platform Information'
+                                ])]),
+                            ])
+                        ]
+                    )
+                ),
+                dcc.Loading(dcc.Graph(id='plots', style={'padding-left': '20px'})),
+            ])
+        ]),
+        ddk.Card(style={'margin-bottom': '10px'}, children=[
+            ddk.Block(children=[
+            ddk.Block(width=.08, children=[
+                html.Img(src='https://www.pmel.noaa.gov/sites/default/files/PMEL-meatball-logo-sm.png',
+                            height=100,
+                            width=100),
+            ]),
+            ddk.Block(width=.83, children=[
+                html.Div(children=[
+                    dcc.Link('National Oceanic and Atmospheric Administration',
+                                href='https://www.noaa.gov/'),
+                ]),
+                html.Div(children=[
+                    dcc.Link('Pacific Marine Environmental Laboratory', href='https://www.pmel.noaa.gov/'),
+                ]),
+                html.Div(children=[
+                    dcc.Link('oar.pmel.webmaster@noaa.gov', href='mailto:oar.pmel.webmaster@noaa.gov')
+                ]),
+                html.Div(children=[
+                    dcc.Link('DOC |', href='https://www.commerce.gov/'),
+                    dcc.Link(' NOAA |', href='https://www.noaa.gov/'),
+                    dcc.Link(' OAR |', href='https://www.research.noaa.gov/'),
+                    dcc.Link(' PMEL |', href='https://www.pmel.noaa.gov/'),
+                    dcc.Link(' Privacy Policy |', href='https://www.noaa.gov/disclaimer'),
+                    dcc.Link(' Disclaimer |', href='https://www.noaa.gov/disclaimer'),
+                    dcc.Link(' Accessibility |', href='https://www.pmel.noaa.gov/accessibility'),
+                    dcc.Link( version, href='https://github.com/NOAA-PMEL/de_osmc')
+                ])
+            ]),
+        ]),
 
-
-@app.callback(
-    [
-        Output("counts-modal", "opened"),
-    ],
-    [
-        Input("counts-button", "n_clicks"),
-    ],
-    [
-        State("counts-modal", "opened"),
-    ],prevent_initial_call=True,
-)
-def model_state(nc1, opened):
-    return not opened,
+    ]),
+    ddk.Card(id='counts-modal-content', style={'height': '80vh'}, children=[
+        ddk.CardHeader(id='table-header', children='Number of Observations per Variable by Platform Type'),
+        dag.AgGrid(id='nobsByVarAndPlatform', columnDefs=varByPlatform_defs, style={'height':'75vh'})
+    ]),
+    ddk.Card(id='info-modal-card', style={'bgcolor':'gray',}, children=[        
+        dcc.Loading([
+            ddk.CardHeader(id='info-modal-title', children='Fecthing additional information',),
+            html.Div(id='info-body', children=[html.H1('.'),html.H2('.')]),
+        ])
+    ]),
+]),
 
 
 @app.callback(
@@ -492,11 +460,11 @@ def model_state(nc1, opened):
         Output("table-header", "children")
     ],
     [
-        Input("counts-modal", "opened"),
+        Input("counts-button", "n_clicks"),
     ]
 )
-def get_table(is_open):
-    if is_open:
+def get_table(button_click):
+    if button_click:
         nobs_df = db.get_nobs('platform_type')
         counts_df = db.get_platform_counts('platform_type')
         all_df = counts_df.merge(nobs_df, how='inner', on='platform_type')
@@ -509,25 +477,15 @@ def get_table(is_open):
         raise exceptions.PreventUpdate
 
 @app.callback(
-    Output("info-popover", "hide"),
-    Input("info-action", "n_clicks"),
-    State("info-popover", "hide"),
-    prevent_initial_call=True,
-)
-def alert(n_clicks, hide):
-    return not hide
-
-@app.callback(
     Output('info-body', 'children'),
-    Output('info-popover', 'title'),
+    Output('info-modal-title', 'children'),
     Input('info-action', 'n_clicks'),
     Input('ui-state', 'data'),
-    State('info-popover', 'hide'),
     prevent_initial_call=True
 )
-def fetch_info(click, in_info_ui_state, in_hide):
+def fetch_info(click, in_info_ui_state):
     tid = ctx.triggered_id
-    if in_info_ui_state is not None and (tid == 'info-action' or in_hide == False):
+    if in_info_ui_state is not None and (tid == 'info-action'):
         info_ui_state = json.loads(in_info_ui_state)
         if info_ui_state['platform_code'] is None:
             return html.Div(html.H5('No platform selected.')), 'You must select a platform'
@@ -842,19 +800,13 @@ def show_platforms(in_ui_state, map_state):
     else:
         location_zoom = zoom
 
-    print(location_zoom)
-
     if location_zoom < 3:
-        print('30')
         graticules = 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_graticules_30.geojson'
     elif location_zoom >=3 and location_zoom < 4:
-        print('20')
         graticules = 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_graticules_20.geojson'
     elif location_zoom > 4 and location_zoom < 5:
-        print('10')
         graticules = 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_graticules_10.geojson'
     else:
-        print('5')
         graticules = 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_graticules_5.geojson'
 
     if map_state and 'mapbox.center' in map_state:
@@ -966,7 +918,7 @@ def show_platforms(in_ui_state, map_state):
         
     location_map.update_layout(
         height=map_height,
-        mapbox_style="white-bg",
+       mapbox_style="white-bg",
         mapbox_layers=[
             {
                 "below": 'traces',
