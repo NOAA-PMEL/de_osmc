@@ -1,9 +1,8 @@
 click
+dash
 dash-design-kit
 gunicorn
 numpy
-dash-bootstrap-components
-dash-mantine-components==0.12.1
 redis
 celery
 colorcet
