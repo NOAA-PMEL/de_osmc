@@ -134,7 +134,13 @@ def append_new_observations():
     logger.info('Updating data...')
     if df.shape[0] > 0:
         df.to_csv('../mount/update.csv', index=False)
-        df.to_sql(constants.data_table, constants.postgres_engine, if_exists='append', index=False, chunksize=500, method='multi')
+        for i in range(0, df.shape[0],10000):
+            start = i
+            if i + 10000 > df.shape[0]:
+                end = df.shape[0]
+            else:
+                end = i + 10000
+            df.iloc[start:end].to_sql(constants.data_table, constants.postgres_engine, if_exists='append', index=False, chunksize=500, method='multi')
 
     # These are small and should be made to match the data in the database, so replace them
     df = db.get_data(None)
