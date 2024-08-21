@@ -676,9 +676,7 @@ def set_platform_list(list_variable_in, list_platform_type_in, list_country_in):
 )
 def set_platform_code_from_map(state_in_click):
     out_platform_code = None
-    print('map click')
     if state_in_click is not None:
-        print(str(state_in_click))
         fst_point = state_in_click['points'][0]
         out_platform_code = fst_point['customdata']
     return [out_platform_code]
@@ -920,7 +918,7 @@ def show_platforms(in_ui_state, map_state):
         
     location_map.update_layout(
         height=map_height,
-       mapbox_style="white-bg",
+        mapbox_style="white-bg",
         mapbox_layers=[
             {
                 "below": 'traces',
