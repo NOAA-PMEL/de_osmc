@@ -143,11 +143,12 @@ def append_new_observations():
             df.iloc[start:end].to_sql(constants.data_table, constants.postgres_engine, if_exists='append', index=False, chunksize=500, method='multi')
 
     # These are small and should be made to match the data in the database, so replace them
-    df = db.get_data(None)
-    logger.info('Preparing sub-sets for locations and counts.')
-    locations_df = df.groupby('platform_code', as_index=False).last()
 
-    counts_df = df.groupby('platform_code').count()
+    logger.info('Preparing sub-sets for locations and counts.')
+    locations_df = db.find_locations()
+
+    # This isn't used. A database query provides the counts on demand.
+    counts_df = db.get_nobs('platform_code')
     counts_df.reset_index(inplace=True)
 
     logger.info('Updating counts...')
@@ -157,19 +158,3 @@ def append_new_observations():
     locations_df.to_csv('../mount/locations.csv', index=False)
     locations_df.to_sql(constants.locations_table, constants.postgres_engine, if_exists='replace', index=False, method='multi')
     logger.info('Update complete +=+=+=+=')
-
-    
-    
-@celery_app.task
-def counts_and_location():
-    df = db.get_data(None)
-    logger.info('Preparing sub-sets for locations and counts.')
-    locations_df = df.groupby('platform_code', as_index=False).last()
-
-    counts_df = df.groupby('platform_code').count()
-    counts_df.reset_index(inplace=True)
-
-    logger.info('Updating counts...')
-    counts_df.to_sql(constants.counts_table, constants.postgres_engine, if_exists='replace', index=False)
-    logger.info('Updating locations...')
-    locations_df.to_sql(constants.locations_table, constants.postgres_engine, if_exists='replace', index=False)

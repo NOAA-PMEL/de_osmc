@@ -56,7 +56,7 @@ def get_data(platform):
     selection = 'SELECT * from {}'
     if platform is not None:
         selection = selection + ' WHERE PLATFORM_CODE=\'' + str(platform) +'\''
-    selection = selection + ' ORDER BY TIME;'
+    selection = selection + ' ORDER BY TIME LIMIT 10000;'
     updated_df = pd.read_sql(
         selection.format(constants.data_table), constants.postgres_engine
     )
@@ -96,12 +96,33 @@ def get_nobs(grouping):
     nobs_df['total'] = nobs_df.sum(numeric_only=True, axis=1)
     return nobs_df
 
+
+# https://stackoverflow.com/questions/121387/fetch-the-rows-which-have-the-max-value-for-a-column-for-each-distinct-value-of
+def find_locations():
+    query = f'''
+        SELECT *, r.maxtime
+        FROM (
+            SELECT platform_code, MAX(time) as maxtime
+            FROM osmc
+            GROUP BY platform_code
+        ) r
+        INNER JOIN osmc t
+        ON t.platform_code = r.platform_code AND t.time = r.maxtime
+    '''
+    locations = pd.read_sql(query, constants.postgres_engine)
+    locations = locations.T.groupby(level=0).first().T
+    # Get the last entry for variables with multiple depths (couldn't quite figure it out with sql)
+    locations = locations.groupby('platform_code', as_index=False).last()
+    return locations 
+
+
 def get_platform_counts(grouping):
     platform_count = pd.read_sql(
         "SELECT {}, count(*) FROM {} GROUP BY {} ORDER BY {}".format(grouping, constants.locations_table, grouping, grouping), constants.postgres_engine
     )
     platform_dict = dict(zip(platform_count[grouping], platform_count['count']))
     return platform_count
+
 
 def get_range(column):
     column_range = pd.read_sql(

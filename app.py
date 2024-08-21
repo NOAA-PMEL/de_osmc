@@ -1006,6 +1006,7 @@ def make_plots(plot_in_ui_state):
 
     plot_df = db.get_data(selection_code)
     subplots = {}
+    subplots_reversed = {}
     titles = []
     y_title = {}
     process_surf = 0
@@ -1020,6 +1021,7 @@ def make_plots(plot_in_ui_state):
             download_variables.append(var)
             varplot = go.Scatter(x=dfvar['time'], y=dfvar[var], name=var, mode=marker_menu)
             subplots[var] = varplot
+            subplots_reversed[var] = 'no'
             titles.append(var + ' (' + constants.units[var] + ')')
             y_title[var] = var + ' (' + constants.units[var] + ')'
 
@@ -1043,10 +1045,12 @@ def make_plots(plot_in_ui_state):
                                      mode='markers', name=var, text=dfvar[var])
                 titles.append(var + ' (' + constants.units[var] + ')')
                 y_title[var] = 'depth (m)'
+                subplots_reversed[var] = 'yes'
             else:
                 varplot = go.Scattergl(x=dfvar['time'], y=dfvar[var], name=var, mode=marker_menu, marker=dict(showscale=False))
                 titles.append(var +  ' (' + constants.units[var] + ')' + ' at depth ' + str(depths[0]))
                 y_title[var] = var +  ' (' + constants.units[var] + ')'
+                subplots_reversed[var] = 'no'
             subplots[var] = varplot
 
     num_plots = len(subplots)
@@ -1080,7 +1084,8 @@ def make_plots(plot_in_ui_state):
             current_plot['marker']['colorbar']['y'] = (plots['layout'][yax]['domain'][1] + plots['layout'][yax]['domain'][0])/2
             current_plot['marker']['colorbar']['x'] = plots['layout'][xax]['domain'][1]
             current_plot['marker']['colorbar']['yanchor'] = 'middle'
-            plots['layout'][yax]['autorange'] = "reversed"
+            if subplots_reversed[plot] == 'yes':
+                plots['layout'][yax]['autorange'] = "reversed"
         plots.add_trace(current_plot, row=row, col=col)
         plots.update_xaxes(title_text='Time', showticklabels=True, row=row, col=col)
         plots.update_yaxes(title_text=y_title[plot], showticklabels=True, row=row, col=col)
