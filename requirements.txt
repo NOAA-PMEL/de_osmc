@@ -1,5 +1,6 @@
 click
 dash
+plotly>5.23.0
 dash-design-kit
 gunicorn
 numpy
@@ -11,3 +12,4 @@ dash-ag-grid
 pandas==1.4.1
 psycopg2-binary==2.8.6
 sqlalchemy==1.4.31
+dash_enterprise_libraries

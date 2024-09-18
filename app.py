@@ -14,6 +14,7 @@ import db
 import colorcet as cc
 from urllib.request import urlopen
 import dash_ag_grid as dag
+import dash_user_analytics
 
 import json
 # import ssl
@@ -451,8 +452,9 @@ app.layout = ddk.App(show_editor=False, theme=constants.theme, children=[
             html.Div(id='info-body', children=[html.H1('.'),html.H2('.')]),
         ])
     ]),
-]),
+])
 
+dash_user_analytics.DashUserAnalytics(app)
 
 @app.callback(
     [
@@ -794,9 +796,8 @@ def show_platforms(in_ui_state, map_state):
         map_ui_state = json.loads(in_ui_state)
     else:
         raise exceptions.PreventUpdate
-
-    if map_state and 'mapbox.zoom' in map_state:
-        location_zoom = map_state['mapbox.zoom']
+    if map_state and 'map.zoom' in map_state:
+        location_zoom = map_state['map.zoom']
     else:
         location_zoom = zoom
 
@@ -809,8 +810,8 @@ def show_platforms(in_ui_state, map_state):
     else:
         graticules = 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_graticules_5.geojson'
 
-    if map_state and 'mapbox.center' in map_state:
-        location_center = map_state['mapbox.center']
+    if map_state and 'map.center' in map_state:
+        location_center = map_state['map.center']
     else:
         location_center = center
 
@@ -835,7 +836,7 @@ def show_platforms(in_ui_state, map_state):
     if selection_code is not None:
         data_df = db.get_data(selection_code)
         trace_df = data_df.loc[data_df['platform_code']==selection_code]
-        platform_trace = go.Scattermapbox(lat=trace_df["latitude"], lon=trace_df["longitude"], 
+        platform_trace = go.Scattermap(lat=trace_df["latitude"], lon=trace_df["longitude"], 
                                           hovertext=trace_df['trace_text'],
                                           hoverlabel = {'namelength': 0,},
                                           mode='markers',
@@ -905,7 +906,7 @@ def show_platforms(in_ui_state, map_state):
             marker_color = color_map[category]
         else:
             marker_color = '#FF5F1F'
-        platform_dots = go.Scattermapbox(lat=map_trace_df["latitude"], lon=map_trace_df["longitude"], mode='markers',
+        platform_dots = go.Scattermap(lat=map_trace_df["latitude"], lon=map_trace_df["longitude"], mode='markers',
                                           marker=dict(color=marker_color, size=marker_size), name=str(category),
                                           hovertext=map_trace_df['trace_text'],
                                           hoverlabel = {'namelength': 0,},
@@ -918,8 +919,8 @@ def show_platforms(in_ui_state, map_state):
         
     location_map.update_layout(
         height=map_height,
-        mapbox_style="white-bg",
-        mapbox_layers=[
+        map_style="white-bg",
+        map_layers=[
             {
                 "below": 'traces',
                 "sourcetype": "raster",
@@ -942,8 +943,10 @@ def show_platforms(in_ui_state, map_state):
                 "source": graticules
             }
         ],
-        mapbox_zoom=location_zoom,
-        mapbox_center=location_center,
+        map_zoom=location_zoom,
+        map_center=location_center,
+        map_pitch = 0,
+        map_bearing = 0,
         margin={"r": 0, "t": 0, "l": 0, "b": 0},
         legend=dict(
             orientation="v",
@@ -962,7 +965,7 @@ def show_platforms(in_ui_state, map_state):
             line_color = cone_colors[inx]
             x = cones_df.loc[cones_df['name'] == cone, 'longitude']
             y = cones_df.loc[cones_df['name'] == cone, 'latitude']
-            cone_map = go.Scattermapbox(lon=x,
+            cone_map = go.Scattermap(lon=x,
                         lat=y,
                         mode='lines',
                         name=cone,

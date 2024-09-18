@@ -1,3 +1,6 @@
 .mapboxgl-ctrl-attrib-button {
     display: None !important;
 }
+.js-plotly-plot .plotly {
+    cursor: pointer; /* or any desired cursor style */
+}
