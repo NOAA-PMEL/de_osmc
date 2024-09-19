@@ -386,7 +386,7 @@ app.layout = ddk.App(show_editor=False, theme=constants.theme, children=[
                                     children=[html.Button(id='counts-button', children=['Data Counts Table'], style={'font-size':'.8em', 'width':'300px'},)]
                                 ),                       
                             ]),
-                ddk.Graph(id='location-map', style={'padding-left': '20px'}),
+                dcc.Graph(id='location-map', style={'padding-left': '20px'}),
             ]),
         ]),
         ddk.Block(width=100, children=[
