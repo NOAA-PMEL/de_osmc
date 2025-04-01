@@ -88,14 +88,13 @@ def append_new_observations():
     
     url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated + '&time>=now-14days'
     logger.info('Reading data from ' + url)
-
     df = pd.read_csv(url, skiprows=[1], dtype=constants.dtypes, parse_dates=True)
     
     df = df.dropna(subset=['latitude','longitude'], how='any')
     df = df.query('-90.0 <= latitude <= 90')
     df = df.sort_values('time')
     df.reset_index(drop=True, inplace=True)
-    df.loc[:,'millis'] = pd.to_datetime(df['time']).view(np.int64)
+    df.loc[:,'millis'] = pd.to_datetime(df['time']).astype(np.int64)
     df.loc[:,'text_time'] = df['time'].astype(str)
     df.loc[:,'trace_text'] = df['text_time'] + "<br>" + df['platform_type'] + "<br>" + df['country'] + "<br>" + df['platform_code']
     columns = df.columns
@@ -125,6 +124,10 @@ def append_new_observations():
     # logger.info(df.iloc[0])
     # logger.info('Last row=')
     # logger.info(df.iloc[-1])
+    # print('First row=')
+    # print(df.iloc[0])
+    # print('Last row=')
+    # print(df.iloc[-1])
     logger.info('Found ' + str(df.shape[0]) + ' new observations to append.')
 
 

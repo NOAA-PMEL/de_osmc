@@ -1,6 +1,42 @@
-.mapboxgl-ctrl-attrib-button {
-    display: None !important;
-}
 .js-plotly-plot .plotly {
     cursor: pointer; /* or any desired cursor style */
 }
+
+/*
+.mapboxgl-ctrl-attrib-button {
+    display: None !important;
+}
+*/
+/* 
+
+The following styles ensure the attribution tag floats above the map and should be removed if the issue is fixed in a future plotly release. 
+
+https://community.plotly.com/t/plotly-6-map-attribution-box-positioning/91228
+
+*/
+.maplibregl-ctrl-bottom-right {
+    bottom: 10px;
+    right: 10px;
+  }
+  
+  .maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right, .maplibregl-ctrl-top-left, .maplibregl-ctrl-top-right {
+    /* pointer-events: none; */
+    position: absolute;
+    z-index: 2;
+    /* display: none; */
+  }
+  
+  .maplibregl-map {
+    font: 12px/20px Helvetica Neue,Arial,Helvetica,sans-serif;
+      font-family: Helvetica Neue, Arial, Helvetica, sans-serif;
+  }
+  
+  .maplibregl-ctrl-attrib-inner {
+    background-color: rgb(241, 237, 237);
+    border-radius: 10px;
+  }
+  
+  /*This is necessary to remove spacing below the canvas.*/
+  .maplibregl-canvas {
+    display: block;
+  }

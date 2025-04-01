@@ -1,6 +1,6 @@
 click
-dash
-plotly>5.23.0
+dash>=3.0.1
+plotly>=6.0
 dash-design-kit
 gunicorn
 numpy
@@ -9,7 +9,8 @@ celery
 colorcet
 dash-iconify
 dash-ag-grid
-pandas==1.4.1
-psycopg2-binary==2.8.6
-sqlalchemy==1.4.31
+pandas
+panda
+psycopg2-binary
+sqlalchemy
 dash_enterprise_libraries

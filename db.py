@@ -135,9 +135,10 @@ def get_counts():
 
     # This data is periodically getting updated via a separate Celery Process in tasks.py.
     # "dataset_table" is the name of the table that we initialized in tasks.py.
-    updated_df = pd.read_sql(
-        "SELECT * FROM {};".format(constants.counts_table), constants.postgres_engine
-    )
+    with constants.postgres_engine.connect() as conn:
+        updated_df = pd.read_sql(
+            "SELECT * FROM {};".format(constants.counts_table), conn
+        )
     return updated_df
 
 
@@ -146,7 +147,9 @@ def get_locations():
 
     # This data is periodically getting updated via a separate Celery Process in tasks.py.
     # "dataset_table" is the name of the table that we initialized in tasks.py.
-    updated_df = pd.read_sql(
-        "SELECT * FROM {};".format(constants.locations_table), constants.postgres_engine
-    )
+   
+    with constants.postgres_engine.connect() as conn:
+        updated_df = pd.read_sql(
+            "SELECT * FROM {};".format(constants.locations_table), conn
+        )
     return updated_df

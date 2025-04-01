@@ -14,7 +14,6 @@ import db
 import colorcet as cc
 from urllib.request import urlopen
 import dash_ag_grid as dag
-import dash_user_analytics
 
 import json
 # import ssl
@@ -454,7 +453,6 @@ app.layout = ddk.App(show_editor=False, theme=constants.theme, children=[
     ]),
 ])
 
-dash_user_analytics.DashUserAnalytics(app)
 
 @app.callback(
     [
@@ -926,7 +924,7 @@ def show_platforms(in_ui_state, map_state):
                 "sourcetype": "raster",
                 # "sourceattribution": "Powered by Esri",
                 # "sourceattribution": "NOAA National Centers for Environmental Information (NCEI)",
-                "sourceattribution": "General Bathymetric Chart of the Oceans (GEBCO); NOAA National Centers for Environmental Information (NCEI)",
+                "sourceattribution": "&nbsp;GEBCO &amp; NCEI&nbsp;",
                 "source": [
                     #"https://ibasemaps-api.arcgis.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}?token=" + constants.ESRI_API_KEY
                     # 'https://tiles.arcgis.com/tiles/C8EMgrsFcRFL6LrL/arcgis/rest/services/ETOPO1_Global_Relief_Model_Color_Shaded_Relief/MapServer/tile/{z}/{y}/{x}'
@@ -1124,4 +1122,4 @@ def dowload_data(format_in, url_in):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run(debug=True)
