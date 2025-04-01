@@ -136,7 +136,7 @@ def append_new_observations():
     # and when if_exists='replace', a new table overwrites the old one.
     logger.info('Updating data...')
     if df.shape[0] > 0:
-        df.to_csv('../mount/update.csv', index=False)
+        # DEBUG backup to save time reading ERDDAP df.to_csv('../mount/update.csv', index=False)
         for i in range(0, df.shape[0],10000):
             start = i
             if i + 10000 > df.shape[0]:
@@ -155,9 +155,9 @@ def append_new_observations():
     counts_df.reset_index(inplace=True)
 
     logger.info('Updating counts...')
-    counts_df.to_csv('../mount/counts.csv', index=False)
+    # DEBUG backup to save time reading ERDDAPcounts_df.to_csv('../mount/counts.csv', index=False)
     counts_df.to_sql(constants.counts_table, constants.postgres_engine, if_exists='replace', index=False, method='multi')
     logger.info('Updating locations...')
-    locations_df.to_csv('../mount/locations.csv', index=False)
+    # DEBUG backup to save time reading ERDDAPlocations_df.to_csv('../mount/locations.csv', index=False)
     locations_df.to_sql(constants.locations_table, constants.postgres_engine, if_exists='replace', index=False, method='multi')
     logger.info('Update complete +=+=+=+=')
