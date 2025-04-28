@@ -150,6 +150,6 @@ def get_locations():
    
     with constants.postgres_engine.connect() as conn:
         updated_df = pd.read_sql(
-            "SELECT * FROM {};".format(constants.locations_table), conn
+            "SELECT * FROM {};".format(constants.locations_table), con=conn
         )
     return updated_df
