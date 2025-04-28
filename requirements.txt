@@ -9,8 +9,7 @@ celery
 colorcet
 dash-iconify
 dash-ag-grid
-pandas
-panda
+pandas==2.2.3
 psycopg2-binary
 sqlalchemy
 dash_enterprise_libraries
