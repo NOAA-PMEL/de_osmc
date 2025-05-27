@@ -1,4 +1,4 @@
-from dash import Dash, dcc, html, Input, Output, State, exceptions, ctx
+from dash import Dash, dcc, html, Input, Output, State, exceptions, ctx, no_update
 import dash_design_kit as ddk
 import plotly.express as px
 import plotly.graph_objects as go
@@ -678,7 +678,11 @@ def set_platform_code_from_map(state_in_click):
     out_platform_code = None
     if state_in_click is not None:
         fst_point = state_in_click['points'][0]
-        out_platform_code = fst_point['customdata']
+        if 'customdata' in fst_point:
+            out_platform_code = fst_point['customdata']
+        else:
+            print(f'No custom data found for {fst_point}.')
+            return no_update
     return [out_platform_code]
 
 
@@ -1016,6 +1020,7 @@ def make_plots(plot_in_ui_state):
     for var in constants.surface_variables:
         dfvar = plot_df[['time',var]].copy()
         dfvar.dropna(subset=[var], how='all', inplace=True) # do we want to drop nan or not, may have rows from other parameters that are "false" nan!!!
+        dfvar = dfvar.sort_values(['time'])
         if dfvar.shape[0] > 2:
             download_variables.append(var)
             varplot = go.Scatter(x=dfvar['time'], y=dfvar[var], name=var, mode=marker_menu)

@@ -56,7 +56,6 @@ def get_data(platform):
     selection = 'SELECT * from {}'
     if platform is not None:
         selection = selection + ' WHERE PLATFORM_CODE=\'' + str(platform) +'\''
-    selection = selection + ' ORDER BY TIME LIMIT 10000;'
     updated_df = pd.read_sql(
         selection.format(constants.data_table), constants.postgres_engine
     )
