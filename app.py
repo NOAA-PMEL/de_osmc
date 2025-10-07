@@ -218,13 +218,14 @@ app.layout = ddk.App(show_editor=False, theme=constants.theme, children=[
             ddk.Title('Observing System Monitoring Center'),
             dcc.Loading(html.Div(id='map-loader', style={'float': 'right', 'display': 'none'}))
         ]),
-        # ddk.Block(width=.95, children=[
-        #     html.Div('Parts of the US government are closed. This site will not be updated; however, NOAA websites and social media channels necessary to protect lives and property will be maintained. See ', style={'display':'inline'}), 
-        #     html.A('www.weather.gov', href='https://www.weather.gov', style={'display':'inline'}), 
-        #     html.Div(' for critical weather information. To learn more, see ', style={'display': 'inline'}), 
-        #     html.A('www.commerce.gov', href='https://www.commerce.gov', style={'display':'inline'}), 
-        #     html.Div('.', style={'display':'inline'}),
-        # ], style={'margin-left': '40px'}),
+        html.Div(style={"font-size":".73em", 'padding': "10px", 'margin':'5px', "border": "2px solid red"},
+            children=[
+                "The U.S. government is closed. This site will not be updated; however, NOAA websites and social media channels necessary to protect lives and property will be maintained. To learn more, visit ",
+                dcc.Link(href="https://www.commerce.gov/news/blog", children=["commerce.gov."]),
+                "  For the latest forecasts and critical weather information, visit ",
+                dcc.Link(href="https://weather.gov", children="weather.gov.")
+            ]
+        ),
         ddk.Block (id='control-block', width=20, children=[
             ddk.Card(
                 children=[
