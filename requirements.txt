@@ -1,6 +1,5 @@
+dash_enterprise_libraries
 click
-dash>=3.0.1
-plotly>=6.0
 dash-design-kit
 gunicorn
 redis
@@ -11,4 +10,3 @@ dash-ag-grid
 pandas
 psycopg2-binary
 SQLAlchemy
-dash_enterprise_libraries

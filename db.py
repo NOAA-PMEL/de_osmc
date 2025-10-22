@@ -108,10 +108,12 @@ def find_locations():
         INNER JOIN osmc t
         ON t.platform_code = r.platform_code AND t.time = r.maxtime
     '''
-    locations = pd.read_sql(query, constants.postgres_engine)
-    locations = locations.T.groupby(level=0).first().T
-    # Get the last entry for variables with multiple depths (couldn't quite figure it out with sql)
-    locations = locations.groupby('platform_code', as_index=False).last()
+    locations = pd.DataFrame()
+    with constants.postgres_engine.connect() as conn:
+        locations = pd.read_sql(query, con=conn.connection)
+        locations = locations.T.groupby(level=0).first().T
+        # Get the last entry for variables with multiple depths (couldn't quite figure it out with sql)
+        locations = locations.groupby('platform_code', as_index=False).last()
     return locations 
 
 
@@ -136,7 +138,7 @@ def get_counts():
     # "dataset_table" is the name of the table that we initialized in tasks.py.
     with constants.postgres_engine.connect() as conn:
         updated_df = pd.read_sql(
-            "SELECT * FROM {};".format(constants.counts_table), conn
+            "SELECT * FROM {};".format(constants.counts_table), conn.connection
         )
     return updated_df
 
@@ -149,6 +151,6 @@ def get_locations():
    
     with constants.postgres_engine.connect() as conn:
         updated_df = pd.read_sql(
-            "SELECT * FROM {};".format(constants.locations_table), con=conn
+            "SELECT * FROM {};".format(constants.locations_table), con=conn.connection
         )
     return updated_df
