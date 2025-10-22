@@ -143,7 +143,8 @@ def append_new_observations():
                 end = df.shape[0]
             else:
                 end = i + 10000
-            df.iloc[start:end].to_sql(constants.data_table, constants.postgres_engine, if_exists='append', index=False, chunksize=500, method='multi')
+            with constants.postgres_engine.connect() as conn:
+                df.iloc[start:end].to_sql(constants.data_table, con=conn, if_exists='append', index=False, chunksize=500, method='multi')
 
     # These are small and should be made to match the data in the database, so replace them
 

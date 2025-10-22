@@ -42,10 +42,11 @@ def get_between_days_ago(ago1, ago2):
     since1 = datetime.datetime.now() - datetime.timedelta(days = ago1) 
     since2 = datetime.datetime.now() - datetime.timedelta(days = ago2) 
     selection = 'SELECT * from {} WHERE TIME BETWEEN \''+since2.isoformat()+'\' AND \''+since1.isoformat()+'\' ORDER BY TIME';
-    stored_df = pd.read_sql(
-        selection.format(constants.data_table), constants.postgres_engine
-    )
-    return stored_df
+    with constants.postgres_engine.connect() as conn:
+        stored_df = pd.read_sql(
+            selection.format(constants.data_table), con=conn
+        )
+        return stored_df
 
 
 def get_data(platform):
@@ -56,19 +57,21 @@ def get_data(platform):
     selection = 'SELECT * from {}'
     if platform is not None:
         selection = selection + ' WHERE PLATFORM_CODE=\'' + str(platform) +'\''
-    updated_df = pd.read_sql(
-        selection.format(constants.data_table), constants.postgres_engine
-    )
-    return updated_df
+    with constants.postgres_engine.connect() as conn:
+        updated_df = pd.read_sql(
+            selection.format(constants.data_table), con=conn
+        )
+        return updated_df
 
 def test_selection():
     selection = 'SELECT * from {}'
     selection = selection + ' WHERE PLATFORM_TYPE=\'ARGO\''
     selection = selection + ' ORDER BY TIME LIMIT 10;'
-    updated_df = pd.read_sql(
-        selection.format(constants.data_table), constants.postgres_engine
-    )
-    return updated_df
+    with constants.postgres_engine.connect() as conn:
+        updated_df = pd.read_sql(
+            selection.format(constants.data_table), con=conn
+        )
+        return updated_df
 
 def exists():
     try:
@@ -89,11 +92,12 @@ def get_nobs(grouping):
         q = q + "COUNT({}) as {}, ".format(var, var)
     for var in constants.depth_variables:
         q = q + "COUNT({}) as {}, ".format(var, var)
-    nobs_df = pd.read_sql(
-        "SELECT {}, {} FROM {} GROUP BY {};".format(grouping, q[:-2], constants.data_table, grouping), constants.postgres_engine
-    )
-    nobs_df['total'] = nobs_df.sum(numeric_only=True, axis=1)
-    return nobs_df
+    with constants.postgres_engine.connect() as conn:
+        nobs_df = pd.read_sql(
+            "SELECT {}, {} FROM {} GROUP BY {};".format(grouping, q[:-2], constants.data_table, grouping), con=conn
+        )
+        nobs_df['total'] = nobs_df.sum(numeric_only=True, axis=1)
+        return nobs_df
 
 
 # https://stackoverflow.com/questions/121387/fetch-the-rows-which-have-the-max-value-for-a-column-for-each-distinct-value-of
@@ -110,7 +114,7 @@ def find_locations():
     '''
     locations = pd.DataFrame()
     with constants.postgres_engine.connect() as conn:
-        locations = pd.read_sql(query, con=conn.connection)
+        locations = pd.read_sql(query, con=conn)
         locations = locations.T.groupby(level=0).first().T
         # Get the last entry for variables with multiple depths (couldn't quite figure it out with sql)
         locations = locations.groupby('platform_code', as_index=False).last()
@@ -126,10 +130,11 @@ def get_platform_counts(grouping):
 
 
 def get_range(column):
-    column_range = pd.read_sql(
-        "SELECT min({}) AS min_{}, MAX({}) as max_{} FROM {}".format(column, column, column, column, constants.data_table), constants.postgres_engine
-    )
-    return column_range;
+    with constants.postgres_engine.connect() as conn:
+        column_range = pd.read_sql(
+            "SELECT min({}) AS min_{}, MAX({}) as max_{} FROM {}".format(column, column, column, column, constants.data_table), con=conn
+        )
+        return column_range;
 
 def get_counts():
     # In this function, we retrieve the data from postgres using pandas's read_sql method.
@@ -138,7 +143,7 @@ def get_counts():
     # "dataset_table" is the name of the table that we initialized in tasks.py.
     with constants.postgres_engine.connect() as conn:
         updated_df = pd.read_sql(
-            "SELECT * FROM {};".format(constants.counts_table), conn.connection
+            "SELECT * FROM {};".format(constants.counts_table), conn
         )
     return updated_df
 
@@ -151,6 +156,6 @@ def get_locations():
    
     with constants.postgres_engine.connect() as conn:
         updated_df = pd.read_sql(
-            "SELECT * FROM {};".format(constants.locations_table), con=conn.connection
+            "SELECT * FROM {};".format(constants.locations_table), con=conn
         )
     return updated_df

@@ -9,4 +9,4 @@ dash-iconify
 dash-ag-grid
 pandas
 psycopg2-binary
-SQLAlchemy
+SQLAlchemy>2.0
