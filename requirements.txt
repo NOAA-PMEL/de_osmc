@@ -1,9 +1,9 @@
 dash_enterprise_libraries
+celery
 click
 dash-design-kit
 gunicorn
 redis
-celery
 colorcet
 dash-iconify
 dash-ag-grid
