@@ -1,7 +1,7 @@
 import constants
 import pandas as pd
 import datetime
-from sqlalchemy import MetaData, Table
+from sqlalchemy import MetaData, Table, text
 
 
 def trim(days_ago):
@@ -9,15 +9,17 @@ def trim(days_ago):
     r = n - datetime.timedelta(days=days_ago)
     delete = 'DELETE FROM {} WHERE TIME < \'' + r.isoformat() + '\';'
     print(delete)
-    constants.postgres_engine.execute(delete.format(constants.data_table))
+    with constants.postgres_engine.connect() as conn:
+        conn.execute(text(delete.format(constants.data_table)))
 
 def delete_all():
     n = datetime.datetime.now()
     delete = 'DELETE FROM {};'
     print(delete.format(constants.data_table))
-    constants.postgres_engine.execute(delete.format(constants.data_table))
-    constants.postgres_engine.execute(delete.format(constants.counts_table))
-    constants.postgres_engine.execute(delete.format(constants.locations_table))
+    with constants.postgres_engine.connect() as conn:
+        conn.execute(text(delete.format(constants.data_table)))
+        conn.execute(text(delete.format(constants.counts_table)))
+        conn.execute(text(delete.format(constants.locations_table)))
 
 
 def drop_all():
