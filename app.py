@@ -332,6 +332,7 @@ app.layout = ddk.App(show_editor=False, theme=constants.theme, children=[
                             {'label': 'GLIDERS', 'value': 'GLIDERS'},
                             {'label': 'ICE BUOYS', 'value': 'ICE BUOYS'},
                             {'label': 'MOORED BUOYS', 'value': 'MOORED BUOYS'},
+                            {'label': 'PROFILING FLOATS AND GLIDERS', 'value': 'PROFILING FLOATS AND GLIDERS'},
                             {'label': 'RESEARCH', 'value': 'RESEARCH'},
                             {'label': 'SHIPS', 'value': 'SHIPS'},
                             {'label': 'SHORE AND BOTTOM STATIONS', 'value': 'SHORE AND BOTTOM STATIONS'},
