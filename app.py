@@ -15,6 +15,8 @@ import colorcet as cc
 from urllib.request import urlopen
 import dash_ag_grid as dag
 
+import re
+
 import json
 # import ssl
 # ssl._create_default_https_context = ssl._create_unverified_context
@@ -170,6 +172,25 @@ options_from_OSMC_LAS=[
     { 'value':'WATERLEVEL_WRT_LCD','label': 'Tidal Elevation WRT local chart datum'},
     { 'value':'WATERLEVEL_MET_RES','label': 'Meteorological Residual Tidal Elevation'}
 ]
+
+variables = [
+    'sst',
+    'ztmp',
+    'slp',
+    'atmp',
+    'zsal',
+    'windspd',
+    'winddir',
+    'clouds',
+    'dewpoint', 
+    'hur',
+    'wvht', 
+    'waterlevel_met_res', 
+    'waterlevel_wrt_lcd',
+    'water_col_ht', 
+]
+
+regex = re.compile('[^a-zA-Z]')
 
 no_data_graph = go.Figure()
 no_data_graph = no_data_graph.update_layout(
@@ -545,16 +566,34 @@ def read_url(trigger):
         out_platform_code = params['platform_code'][0]
 
     if 'platform_type' in params:
-        out_platform_type = params['platform_type']
+        in_platform_type = params['platform_type']
+        out_platform_type = []
+        for p in in_platform_type:
+            if p in platform_color:
+                out_platform_type.append(p)
+
     
     if 'color_by' in params:
         out_color_by = params['color_by'][0]
+        if out_color_by != "platform_type" and out_color_by != "country":
+            out_color_by = ''
+
     
     if 'variable' in params:
-        out_variable = params['variable']
+        in_variable = params['variable']
+        out_variable = []
+        for v in in_variable:
+            if v in variables:
+                out_variable.append(v)
     
+
     if 'country' in params:
-        out_country = params['country']
+        in_country = params['country']
+        out_country = []
+        for c in in_country:
+            if c in country_color:
+                out_country.append(c)
+
 
     map_df = db.get_locations()
     counts_df = db.get_counts()
