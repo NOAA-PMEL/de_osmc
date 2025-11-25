@@ -568,23 +568,27 @@ def read_url(trigger):
 
     if 'platform_type' in params:
         in_platform_type = params['platform_type']
-        out_platform_type = []
+        out_platform_type = None
         for p in in_platform_type:
             if p in platform_color:
+                if out_platform_type is None:
+                    out_platform_type = []
                 out_platform_type.append(p)
 
     
     if 'color_by' in params:
         out_color_by = params['color_by'][0]
         if out_color_by != "platform_type" and out_color_by != "country":
-            out_color_by = ''
+            out_color_by = None
 
     
     if 'variable' in params:
         in_variable = params['variable']
-        out_variable = []
+        out_variable = None
         for v in in_variable:
             if v in variables:
+                if out_variable is None:
+                    out_variable = []
                 out_variable.append(v)
     
 
