@@ -10,6 +10,8 @@ from celery.utils.log import get_task_logger
 
 from random import randrange
 
+import urllib.parse
+
 import constants
 import db
 import ssl
@@ -35,7 +37,7 @@ def setup_periodic_tasks(sender, **kwargs):
          name='Append New Observations'
     )
     sender.add_periodic_task(
-         crontab(hour='1'),
+         crontab(hour='1', minute='0'),
          trim_database.s(),
          name='Delete observations older than 45 days'
     )
@@ -43,7 +45,7 @@ def setup_periodic_tasks(sender, **kwargs):
 @celery_app.task
 def load_observations(force=False):
     if force or not db.exists():
-        url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated + '&time>=now-45days'
+        url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + urllib.parse.quote(constants.all_variables_comma_separated + '&time>=now-45days')
         logger.info('Reading data from ' + url)
 
         df = pd.read_csv(url, skiprows=[1], dtype=constants.dtypes, parse_dates=True)
@@ -86,7 +88,7 @@ def trim_database():
 @celery_app.task
 def append_new_observations():
     
-    url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + constants.all_variables_comma_separated + '&time>=now-14days'
+    url = 'https://data.pmel.noaa.gov/pmel/erddap/tabledap/osmc_rt_60.csv?' + urllib.parse.quote(constants.all_variables_comma_separated + '&time>=now-14days')
     logger.info('Reading data from ' + url)
     df = pd.read_csv(url, skiprows=[1], dtype=constants.dtypes, parse_dates=True)
     
@@ -108,7 +110,8 @@ def append_new_observations():
         stored_df = db.get_between_days_ago(ago1, ago2)
         stored_df = stored_df.assign(source='db')
         logger.info(str(stored_df.shape[0]) + ' obervations found in database.')
-        df = pd.concat([stored_df, df])
+        if not stored_df.empty:
+            df = pd.concat([stored_df, df])
         df.reset_index(inplace=True, drop=True)
         PRECISION = 3
         df.drop(df[['latitude', 'longitude', 'observation_depth','millis']].round(PRECISION).duplicated().loc[lambda latitude: latitude].index, inplace=True)

@@ -1,4 +1,4 @@
-from dash import Dash, dcc, html, Input, Output, State, exceptions, ctx, no_update
+from dash import Dash, dcc, get_asset_url, html, Input, Output, State, exceptions, ctx, no_update
 import dash_design_kit as ddk
 import plotly.express as px
 import plotly.graph_objects as go
@@ -436,12 +436,12 @@ app.layout = ddk.App(show_editor=False, theme=constants.theme, children=[
         ]),
         ddk.Card(style={'margin-bottom': '10px'}, children=[
             ddk.Block(children=[
-            ddk.Block(width=.08, children=[
-                html.Img(src='https://www.pmel.noaa.gov/sites/default/files/PMEL-meatball-logo-sm.png',
+            ddk.Block(width=.16, children=[
+                html.Img(src=get_asset_url('pmel_lockup.png'),
                             height=100,
-                            width=100),
+                            width=215),
             ]),
-            ddk.Block(width=.83, children=[
+            ddk.Block(width=.8, children=[
                 html.Div(children=[
                     dcc.Link('National Oceanic and Atmospheric Administration',
                                 href='https://www.noaa.gov/'),

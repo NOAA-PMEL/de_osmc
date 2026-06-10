@@ -7,10 +7,10 @@ from sqlalchemy import MetaData, Table, text
 def trim(days_ago):
     n = datetime.datetime.now()
     r = n - datetime.timedelta(days=days_ago)
-    delete = 'DELETE FROM {} WHERE TIME < \'' + r.isoformat() + '\';'
-    print(delete)
-    with constants.postgres_engine.connect() as conn:
-        conn.execute(text(delete.format(constants.data_table)))
+    delete = f"DELETE FROM {constants.data_table} WHERE TIME < '{r.isoformat()}';"
+    with constants.postgres_engine.connect() as connection:
+        connection.execute(text(delete))
+        connection.commit()
 
 def delete_all():
     n = datetime.datetime.now()
